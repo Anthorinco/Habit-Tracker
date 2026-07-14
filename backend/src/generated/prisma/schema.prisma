@@ -1,0 +1,56 @@
+generator client {
+  provider = "prisma-client-js"
+  output   = "../src/generated/prisma"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+model User {
+  id          Int      @id @default(autoincrement())
+  nome        String
+  email       String   @unique
+  senha       String
+  dataCriacao DateTime @default(now())
+
+  limparPrioridadesNoFimDaSemana Boolean @default(true)
+
+  habits     Habit[]
+  priorities Priority[]
+  notes      Note[]
+}
+
+model Habit {
+  id          Int               @id @default(autoincrement())
+  nome        String
+  dataCriacao DateTime          @default(now())
+  userId      Int
+  user        User              @relation(fields: [userId], references: [id], onDelete: Cascade)
+  historico   HistoricoHabito[]
+}
+
+model HistoricoHabito {
+  id            Int      @id @default(autoincrement())
+  dataConclusao DateTime
+  habitId       Int
+  habit         Habit    @relation(fields: [habitId], references: [id], onDelete: Cascade)
+}
+
+model Priority {
+  id          Int      @id @default(autoincrement())
+  descricao   String
+  concluido   Boolean  @default(false)
+  dataCriacao DateTime @default(now())
+  userId      Int
+  user        User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+}
+
+model Note {
+  id            Int       @id @default(autoincrement())
+  conteudo      String    @db.Text
+  dataCriacao   DateTime  @default(now())
+  dataExpiracao DateTime?
+  userId        Int
+  user          User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+}
