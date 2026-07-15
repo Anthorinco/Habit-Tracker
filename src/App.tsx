@@ -63,7 +63,7 @@ export default function App() {
       w="100vw"
     >
       <Heading mb={12} size="4xl" color="grey.800">
-        Meu Habit Tracker
+        
       </Heading>
 
       <HStack
