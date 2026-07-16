@@ -202,6 +202,12 @@ Validação útil do Prisma:
 npx prisma validate
 ```
 
+O backend também tem rotas de hábitos:
+
+- `POST /api/habits` cria um hábito
+- `GET /api/habits` lista os hábitos do usuário logado
+- `DELETE /api/habits/:id` remove um hábito
+
 ## Observações importantes
 
 - O backend ainda não tem scripts próprios definidos em `backend/package.json`.
@@ -215,6 +221,6 @@ npx prisma validate
 2. Adicionar validação de payload nas rotas de auth.
 3. Expandir a documentação por endpoint, se o backend crescer.
 
-## Documentação detalhada
+## Mapa dos arquivos
 
-Se você quiser o mapa arquivo por arquivo, ele está em [docs/ARQUIVOS.md](/home/anthoni/Coding/Projects(React)/Habit%20Tracker/docs/ARQUIVOS.md).
+O mapa arquivo por arquivo está em [docs/ARQUIVOS.md](/home/anthoni/Coding/Projects(React)/Habit%20Tracker/docs/ARQUIVOS.md).
