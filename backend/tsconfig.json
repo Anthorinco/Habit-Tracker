@@ -1,4 +1,5 @@
 {
+  // Config do TypeScript do backend em ESM, com checagem rigorosa.
   // Visit https://aka.ms/tsconfig to read more about this file
   "compilerOptions": {
     // File Layout

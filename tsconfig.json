@@ -1,4 +1,5 @@
 {
+  // Config raiz do frontend: apenas referencia os alvos do app e do Node.
   "files": [],
   "references": [
     { "path": "./tsconfig.app.json" },

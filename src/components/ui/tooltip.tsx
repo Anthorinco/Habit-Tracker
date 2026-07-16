@@ -10,6 +10,7 @@ export interface TooltipProps extends ChakraTooltip.RootProps {
   disabled?: boolean
 }
 
+// Wrapper fino para usar tooltip do Chakra com uma API menor e padronizada.
 export const Tooltip = React.forwardRef<HTMLDivElement, TooltipProps>(
   function Tooltip(props, ref) {
     const {
@@ -23,6 +24,7 @@ export const Tooltip = React.forwardRef<HTMLDivElement, TooltipProps>(
       ...rest
     } = props
 
+    // Quando desativado, devolve o filho sem empacotar no componente de tooltip.
     if (disabled) return children
 
     return (

@@ -6,6 +6,7 @@ import { Flex, Heading, VStack, HStack, Box } from "@chakra-ui/react";
 import { Notas } from "./Notas.tsx";
 
 export default function App() {
+  // Estado temporario da tela principal. Hoje os dados vivem so no navegador.
   const [habitos, setHabitos] = useState(["Hábito 1", "Hábito 2"]);
   const [prioridades, setPrioridades] = useState([
     "Prioridade 1",
@@ -13,19 +14,21 @@ export default function App() {
   ]);
   const [notas, setNotas] = useState(["Nota 1", "Nota 2"]);
 
-  // Const que adicionam.
+  // Adiciona um novo item ao final da lista correspondente.
   const adicionarHabito = () => {
     const novo = prompt("Digite o novo hábito:");
     if (novo) {
       setHabitos([...habitos, novo]);
     }
   };
+  // Mesma ideia acima, mas para prioridades semanais.
   const adicionarPrioridade = () => {
     const novo = prompt("Digite a nova prioridade:");
     if (novo) {
       setPrioridades([...prioridades, novo]);
     }
   };
+  // Insere uma nota nova na coluna lateral.
   const adicionarNotas = () => {
     const novo = prompt("Digite a nova nota:");
     if (novo) {
@@ -33,19 +36,21 @@ export default function App() {
     }
   };
 
-  // Const que removem.
+  // Remove um item pelo indice. Simples enquanto os dados ainda nao usam ids.
   const removerHabito = (indexParaRemover: number) => {
     const listaAtualizada = habitos.filter(
       (_, index) => index !== indexParaRemover,
     );
     setHabitos(listaAtualizada);
   };
+  // Remove uma prioridade da lista local.
   const removerPrioridade = (indexParaRemover: number) => {
     const listaAtualizada = prioridades.filter(
       (_, index) => index !== indexParaRemover,
     );
     setPrioridades(listaAtualizada);
   };
+  // Remove uma nota da lista local.
   const removerNotas = (indexParaRemover: number) => {
     const listaAtualizada = notas.filter(
       (_, index) => index !== indexParaRemover,
@@ -62,10 +67,12 @@ export default function App() {
       minH="100vh"
       w="100vw"
     >
+      {/* Titulo reservado para futura definicao de marca. */}
       <Heading mb={12} size="4xl" color="grey.800">
-        
+
       </Heading>
 
+      {/* Layout principal: coluna de habitos/prioridades e lateral de notas. */}
       <HStack
         align="flex-start"
         gap={10}

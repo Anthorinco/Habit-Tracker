@@ -9,6 +9,7 @@ import { LuMoon, LuSun } from "react-icons/lu"
 
 export interface ColorModeProviderProps extends ThemeProviderProps {}
 
+// Mantem o modo de cor global sincronizado com a classe CSS usada pelo Chakra.
 export function ColorModeProvider(props: ColorModeProviderProps) {
   return (
     <ThemeProvider attribute="class" disableTransitionOnChange {...props} />
@@ -23,6 +24,7 @@ export interface UseColorModeReturn {
   toggleColorMode: () => void
 }
 
+// Le o tema atual e expõe helpers para alternar entre claro e escuro.
 export function useColorMode(): UseColorModeReturn {
   const { resolvedTheme, setTheme, forcedTheme } = useTheme()
   const colorMode = forcedTheme || resolvedTheme
@@ -36,11 +38,13 @@ export function useColorMode(): UseColorModeReturn {
   }
 }
 
+// Atalho para escolher um valor diferente dependendo do modo de cor.
 export function useColorModeValue<T>(light: T, dark: T) {
   const { colorMode } = useColorMode()
   return colorMode === "dark" ? dark : light
 }
 
+// Icone que representa o tema ativo no momento.
 export function ColorModeIcon() {
   const { colorMode } = useColorMode()
   return colorMode === "dark" ? <LuMoon /> : <LuSun />
@@ -48,6 +52,7 @@ export function ColorModeIcon() {
 
 interface ColorModeButtonProps extends Omit<IconButtonProps, "aria-label"> {}
 
+// Botao pronto para alternar o tema sem repetir a logica em cada tela.
 export const ColorModeButton = React.forwardRef<
   HTMLButtonElement,
   ColorModeButtonProps
@@ -75,6 +80,7 @@ export const ColorModeButton = React.forwardRef<
   )
 })
 
+// Wrapper para forcar tema claro em uma subtree especifica.
 export const LightMode = React.forwardRef<HTMLSpanElement, SpanProps>(
   function LightMode(props, ref) {
     return (
@@ -91,6 +97,7 @@ export const LightMode = React.forwardRef<HTMLSpanElement, SpanProps>(
   },
 )
 
+// Wrapper para forcar tema escuro em uma subtree especifica.
 export const DarkMode = React.forwardRef<HTMLSpanElement, SpanProps>(
   function DarkMode(props, ref) {
     return (

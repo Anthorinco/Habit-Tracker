@@ -2,55 +2,75 @@ generator client {
   provider = "prisma-client-js"
 }
 
+/// Banco PostgreSQL usado pela API.
 datasource db {
   provider = "postgresql"
 }
+
+/// Usuario central do sistema e dono dos dados da aplicacao.
 model User {
-  id          Int        @id @default(autoincrement())
+  id          Int      @id @default(autoincrement())
   nome        String
-  email       String     @unique
+  email       String   @unique
   senha       String
-  dataCriacao DateTime   @default(now())
-  
-  
-  limparPrioridadesNoFimDaSemana Boolean @default(true) 
+  dataCriacao DateTime @default(now())
 
-  
-  habits      Habit[]
-  priorities  Priority[]
-  notes       Note[]
+  /// Preferencia para limpar prioridades automaticamente no fim da semana.
+  limparPrioridadesNoFimDaSemana Boolean @default(true)
+
+  /// Relacoes 1:N com os registros do usuario.
+  habits     Habit[]
+  priorities Priority[]
+  notes      Note[]
 }
 
+/// Habito cadastrado por um usuario.
 model Habit {
-  id          Int               @id @default(autoincrement())
+  id          Int      @id @default(autoincrement())
   nome        String
-  dataCriacao DateTime          @default(now())
-  userId      Int
-  user        User              @relation(fields: [userId], references: [id], onDelete: Cascade)
-  historico   HistoricoHabito[]
+  dataCriacao DateTime @default(now())
+
+  /// Usuario dono deste habito.
+  userId Int
+  user   User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  /// Conclusoes registradas para este habito.
+  historico HistoricoHabito[]
 }
 
+/// Registro de conclusao de um habito em uma data especifica.
 model HistoricoHabito {
-  id            Int      @id @default(autoincrement())
-  dataConclusao DateTime 
-  habitId       Int
-  habit         Habit    @relation(fields: [habitId], references: [id], onDelete: Cascade)
+  id           Int      @id @default(autoincrement())
+  dataConclusao DateTime @default(now())
+
+  /// Habito associado ao registro.
+  habitId Int
+  habit   Habit @relation(fields: [habitId], references: [id], onDelete: Cascade)
+
+  /// Evita duplicar a mesma conclusao para o mesmo habito no mesmo instante.
+  @@unique([habitId, dataConclusao])
 }
 
+/// Prioridade semanal do usuario.
 model Priority {
   id          Int      @id @default(autoincrement())
   descricao   String
   concluido   Boolean  @default(false)
   dataCriacao DateTime @default(now())
-  userId      Int
-  user        User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  /// Usuario dono da prioridade.
+  userId Int
+  user   User @relation(fields: [userId], references: [id], onDelete: Cascade)
 }
 
+/// Nota livre associada ao usuario.
 model Note {
-  id           Int       @id @default(autoincrement())
-  conteudo     String    @db.Text
-  dataCriacao  DateTime  @default(now())
-  dataExpiracao DateTime? 
-  userId       Int
-  user         User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  id            Int      @id @default(autoincrement())
+  conteudo      String   @db.Text
+  dataCriacao   DateTime @default(now())
+  dataExpiracao DateTime?
+
+  /// Usuario dono desta nota.
+  userId Int
+  user   User @relation(fields: [userId], references: [id], onDelete: Cascade)
 }

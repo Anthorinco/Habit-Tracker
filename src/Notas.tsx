@@ -41,6 +41,7 @@ export function Notas({ lista, onAdd, onRemove }: Modelo) {
             borderColor="whiteAlpha.100"
             py="2"
           >
+            {/* Texto curto para anotações rapidas e sem estrutura. */}
             <Box fontSize="sm">{nota}</Box>
             <Button
               variant="ghost"

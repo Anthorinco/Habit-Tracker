@@ -1,5 +1,6 @@
 {
   "compilerOptions": {
+    // Tipagem principal do app React rodando no Vite.
     "tsBuildInfoFile": "./node_modules/.tmp/tsconfig.app.tsbuildinfo",
     "target": "ES2023",
     "useDefineForClassFields": true,

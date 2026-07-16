@@ -1,3 +1,4 @@
+-- Migration inicial do schema do Habit Tracker.
 -- CreateTable
 CREATE TABLE "User" (
     "id" SERIAL NOT NULL,

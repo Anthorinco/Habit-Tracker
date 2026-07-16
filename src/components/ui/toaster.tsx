@@ -14,6 +14,7 @@ export const toaster = createToaster({
   pauseOnPageIdle: true,
 })
 
+// Renderiza os toasts da aplicacao usando a skin do Chakra.
 export const Toaster = () => {
   return (
     <Portal>

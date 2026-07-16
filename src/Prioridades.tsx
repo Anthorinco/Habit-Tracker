@@ -38,6 +38,7 @@ export function Prioridades({ lista, onAdd, onRemove }: Modelo) {
             borderRadius="md"
           >
             <HStack justify="space-between" w="full">
+              {/* Checkbox de conclusao para marcar a prioridade como feita. */}
               <Checkbox.Root size="lg">
                 <Checkbox.HiddenInput />
                 <Checkbox.Control />

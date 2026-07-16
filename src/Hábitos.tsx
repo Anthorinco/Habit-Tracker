@@ -11,6 +11,7 @@ import { LuFileText, LuLayoutGrid, LuTrash2 } from "react-icons/lu";
 import type { Modelo } from "./types/Modelo";
 
 export function Hábitos({ lista, onAdd, onRemove }: Modelo) {
+  // Colunas da matriz semanal de acompanhamento.
   const dias = [
     "Segunda-feira",
     "Terça-feira",
@@ -72,6 +73,7 @@ export function Hábitos({ lista, onAdd, onRemove }: Modelo) {
 
               {dias.map((dia) => (
                 <Table.Cell key={dia} textAlign="center">
+                  {/* Checkbox visual. Hoje ele nao persiste estado nem conversa com o backend. */}
                   <Checkbox.Root size="lg" colorPalette="blue">
                     <Checkbox.HiddenInput />
                     <Checkbox.Control />
