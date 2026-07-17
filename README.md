@@ -50,17 +50,13 @@ A página React e a API usam o mesmo endereço. A checagem técnica fica em `htt
 
 ## Desenvolvimento com atualização automática
 
-Durante a programação, use dois terminais:
+Inicie a interface e a API juntas com:
 
 ```bash
-# Terminal 1: API
-npm run dev:backend
-
-# Terminal 2: interface
 npm run dev
 ```
 
-O Vite abre normalmente em `http://localhost:5173` e encaminha `/api` para o backend.
+O Vite abre normalmente em `http://localhost:5173` e encaminha `/api` para o backend. Para iniciar apenas uma das partes, use `npm run dev:frontend` ou `npm run dev:backend`.
 
 ## Variáveis de ambiente
 
