@@ -25,6 +25,10 @@ export const prioritySchema = z.object({
   descricao: z.string().trim().min(1, "Informe a prioridade").max(200),
 });
 
+export const prioritySettingsSchema = z.object({
+  limparNoFimDaSemana: z.boolean(),
+});
+
 const expirationDate = z
   .string()
   .datetime({ offset: true, message: "Informe uma data de expiração válida" });
@@ -48,7 +52,6 @@ const dateOnly = z
   }, "Informe uma data válida");
 
 export const habitToggleSchema = z.object({
-  habitId: z.number().int().positive(),
+  id_habito: z.number().int().positive(),
   data: dateOnly,
-  concluido: z.boolean(),
 });

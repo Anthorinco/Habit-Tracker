@@ -1,4 +1,5 @@
-import { pathToFileURL } from "node:url";
+import { existsSync } from "node:fs";
+import { fileURLToPath, pathToFileURL } from "node:url";
 import cors from "cors";
 import express from "express";
 import authRoutes from "./routes/auth.routes.js";
@@ -19,6 +20,20 @@ app.use("/api/auth", authRoutes);
 app.use("/api/habits", habitRoutes);
 app.use("/api/priorities", priorityRoutes);
 app.use("/api/notes", noteRoutes);
+app.use("/api", (_req, res) =>
+  res.status(404).json({ erro: "Rota não encontrada" }),
+);
+
+const frontendDirectory = fileURLToPath(new URL("../../dist", import.meta.url));
+const frontendIndex = fileURLToPath(
+  new URL("../../dist/index.html", import.meta.url),
+);
+
+if (existsSync(frontendIndex)) {
+  app.use(express.static(frontendDirectory));
+  app.get(/.*/, (_req, res) => res.sendFile(frontendIndex));
+}
+
 app.use((_req, res) => res.status(404).json({ erro: "Rota não encontrada" }));
 
 export function startServer() {

@@ -23,7 +23,7 @@ interface HabitsProps {
   disabled?: boolean;
   onAdd: (nome: string) => Promise<void>;
   onRemove: (id: number) => Promise<void>;
-  onToggle: (id: number, data: string, concluido: boolean) => Promise<void>;
+  onToggle: (id: number, data: string) => Promise<void>;
 }
 
 const motivationColors = {
@@ -67,8 +67,8 @@ function HabitControl({
     <Checkbox.Root
       checked={day.concluido}
       disabled={disabled}
-      onCheckedChange={(details) => {
-        void onToggle(habit.id, day.data, details.checked === true).catch(() => undefined);
+      onCheckedChange={() => {
+        void onToggle(habit.id, day.data).catch(() => undefined);
       }}
       colorPalette="green"
       aria-label={`${habit.nome}: ${dayLabel(day.data, "long")}`}
@@ -118,8 +118,14 @@ export function Hábitos({ lista, hoje, disabled = false, onAdd, onRemove, onTog
     }
   };
 
+  const remove = (habit: Habit) => {
+    if (!window.confirm(`Remover o hábito "${habit.nome}" e todo o histórico?`)) return;
+    setPending(`remove-${habit.id}`);
+    void onRemove(habit.id).catch(() => undefined).finally(() => setPending(null));
+  };
+
   return (
-    <Box borderWidth="1px" borderColor="#30322f" borderRadius="lg" bg="#191a18" overflow="hidden">
+    <Box id="habitos" scrollMarginTop="4" borderWidth="1px" borderColor="#30322f" borderRadius="lg" bg="#191a18" overflow="hidden">
       <Flex direction={{ base: "column", md: "row" }} justify="space-between" gap="4" px={{ base: "4", sm: "5" }} py="5" borderBottomWidth="1px" borderColor="#2a2c29">
         <Box>
           <Heading size="md" letterSpacing="-0.02em">Hábitos</Heading>
@@ -137,7 +143,7 @@ export function Hábitos({ lista, hoje, disabled = false, onAdd, onRemove, onTog
               <Input value={draft} onChange={(event) => setDraft(event.target.value)} onBlur={() => setTouched(true)} aria-label="Novo hábito" aria-invalid={hasError} placeholder="Adicionar um hábito..." disabled={disabled || pending !== null} bg="#141513" borderColor={hasError ? "#d78278" : "#3a3d38"} />
               {hasError && <Text mt="1.5" fontSize="xs" color="#e39b93" role="alert">Escreva um hábito antes de adicionar.</Text>}
             </Box>
-            <Button type="submit" colorPalette="green" loading={pending === "new"} disabled={disabled || !draft.trim()} minW="auto" px="3">
+            <Button type="submit" aria-label="Adicionar hábito" colorPalette="green" loading={pending === "new"} disabled={disabled || !draft.trim()} minW="auto" px="3">
               <Icon as={LuPlus} /><Text display={{ base: "none", sm: "block" }}>Adicionar</Text>
             </Button>
           </HStack>
@@ -160,7 +166,7 @@ export function Hábitos({ lista, hoje, disabled = false, onAdd, onRemove, onTog
                   <Table.Row key={habit.id} borderColor="#2a2c29" _hover={{ bg: "#20221f" }}>
                     <Table.Cell py="3.5" pl="5" maxW="330px"><HabitDetails habit={habit} /></Table.Cell>
                     {habit.historicoSemanal.map((day) => <Table.Cell key={day.data} textAlign="center" bg={day.data === hoje ? "#1d211c" : undefined} px="2"><HabitControl habit={habit} day={day} disabled={disabled || pending !== null} onToggle={onToggle} /></Table.Cell>)}
-                    <Table.Cell px="1"><IconButton aria-label={`Remover ${habit.nome}`} variant="ghost" size="xs" color="#888d85" disabled={disabled || pending !== null} onClick={() => { setPending(`remove-${habit.id}`); void onRemove(habit.id).catch(() => undefined).finally(() => setPending(null)); }}><Icon as={LuTrash2} /></IconButton></Table.Cell>
+                    <Table.Cell px="1"><IconButton aria-label={`Remover ${habit.nome}`} variant="ghost" size="xs" color="#888d85" disabled={disabled || pending !== null} onClick={() => remove(habit)}><Icon as={LuTrash2} /></IconButton></Table.Cell>
                   </Table.Row>
                 ))}
               </Table.Body>
@@ -169,8 +175,8 @@ export function Hábitos({ lista, hoje, disabled = false, onAdd, onRemove, onTog
 
           <Stack display={{ base: "flex", md: "none" }} gap="0">
             {lista.map((habit) => <Box key={habit.id} px="4" py="4" borderBottomWidth="1px" borderColor="#2a2c29">
-              <Flex justify="space-between" gap="3" align="flex-start"><HabitDetails habit={habit} /><IconButton aria-label={`Remover ${habit.nome}`} variant="ghost" size="xs" color="#888d85" disabled={disabled || pending !== null} onClick={() => { setPending(`remove-${habit.id}`); void onRemove(habit.id).catch(() => undefined).finally(() => setPending(null)); }}><Icon as={LuTrash2} /></IconButton></Flex>
-              <Flex mt="4" gap="1.5" justify="space-between">{habit.historicoSemanal.map((day) => <Stack key={day.data} gap="1" align="center"><Text fontSize="10px" color={day.data === hoje ? "#bfdab4" : "#7f847c"} fontWeight={day.data === hoje ? "bold" : "medium"}>{dayLabel(day.data, "short").slice(0, 1)}</Text><HabitControl habit={habit} day={day} disabled={disabled || pending !== null} onToggle={onToggle} /></Stack>)}</Flex>
+              <Flex justify="space-between" gap="3" align="flex-start"><HabitDetails habit={habit} /><IconButton aria-label={`Remover ${habit.nome}`} variant="ghost" size="xs" color="#888d85" disabled={disabled || pending !== null} onClick={() => remove(habit)}><Icon as={LuTrash2} /></IconButton></Flex>
+              <Flex mt="4" gap="1.5" justify="space-between">{habit.historicoSemanal.map((day) => <Stack key={day.data} gap="1" align="center"><Text fontSize="10px" color={day.data === hoje ? "#bfdab4" : "#8f938c"} fontWeight={day.data === hoje ? "bold" : "medium"}>{dayLabel(day.data, "short")}</Text><HabitControl habit={habit} day={day} disabled={disabled || pending !== null} onToggle={onToggle} /></Stack>)}</Flex>
             </Box>)}
           </Stack>
         </>

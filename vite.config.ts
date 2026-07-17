@@ -5,4 +5,9 @@ import react from '@vitejs/plugin-react'
 // Config minima do Vite: o projeto so precisa do plugin React.
 export default defineConfig({
   plugins: [react()],
+  server: {
+    proxy: {
+      "/api": "http://localhost:3001",
+    },
+  },
 })

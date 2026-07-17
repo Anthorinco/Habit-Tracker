@@ -1,7 +1,44 @@
 import type { Request, Response } from "express";
 import { prisma } from "../prisma.js";
 import { parseBody, parseId } from "../lib/http-validation.js";
-import { prioritySchema } from "../lib/schemas.js";
+import { prioritySchema, prioritySettingsSchema } from "../lib/schemas.js";
+
+export async function getPrioritySettings(req: Request, res: Response) {
+  try {
+    const user = await prisma.user.findUnique({
+      where: { id: req.userId! },
+      select: { limparPrioridadesNoFimDaSemana: true },
+    });
+    if (!user) {
+      return res.status(404).json({ erro: "Usuário não encontrado" });
+    }
+    return res.status(200).json({
+      limparNoFimDaSemana: user.limparPrioridadesNoFimDaSemana,
+    });
+  } catch {
+    return res.status(500).json({ erro: "Não foi possível carregar a preferência" });
+  }
+}
+
+export async function updatePrioritySettings(req: Request, res: Response) {
+  const body = parseBody(prioritySettingsSchema, req.body, res);
+  if (!body) return;
+
+  try {
+    const result = await prisma.user.updateMany({
+      where: { id: req.userId! },
+      data: {
+        limparPrioridadesNoFimDaSemana: body.limparNoFimDaSemana,
+      },
+    });
+    if (result.count === 0) {
+      return res.status(404).json({ erro: "Usuário não encontrado" });
+    }
+    return res.status(200).json(body);
+  } catch {
+    return res.status(500).json({ erro: "Não foi possível salvar a preferência" });
+  }
+}
 
 export async function getPriorities(req: Request, res: Response) {
   try {
@@ -42,7 +79,7 @@ export async function togglePriority(req: Request, res: Response) {
     }
 
     const updated = await prisma.priority.update({
-      where: { id },
+      where: { id, userId: req.userId! },
       data: { concluido: !priority.concluido },
     });
     return res.status(200).json(updated);

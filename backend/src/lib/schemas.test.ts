@@ -1,6 +1,11 @@
 import assert from "node:assert/strict";
 import test from "node:test";
-import { habitToggleSchema, noteUpdateSchema, registerSchema } from "./schemas.js";
+import {
+  habitToggleSchema,
+  noteUpdateSchema,
+  prioritySettingsSchema,
+  registerSchema,
+} from "./schemas.js";
 
 test("register validation rejects unsafe input and normalizes valid data", () => {
   assert.equal(
@@ -24,21 +29,24 @@ test("register validation rejects unsafe input and normalizes valid data", () =>
 
 test("habit toggle and note autosave accept only structured data", () => {
   assert.equal(
-    habitToggleSchema.safeParse({ habitId: 2, data: "17/07/2026", concluido: true })
+    habitToggleSchema.safeParse({ id_habito: 2, data: "17/07/2026" })
       .success,
     false,
   );
   assert.deepEqual(
     habitToggleSchema.parse({
-      habitId: 2,
+      id_habito: 2,
       data: "2026-07-17",
-      concluido: true,
     }),
-    { habitId: 2, data: "2026-07-17", concluido: true },
+    { id_habito: 2, data: "2026-07-17" },
   );
   assert.equal(
     noteUpdateSchema.safeParse({ conteudo: "texto", dataExpiracao: "amanhã" })
       .success,
+    false,
+  );
+  assert.equal(
+    prioritySettingsSchema.safeParse({ limparNoFimDaSemana: "sim" }).success,
     false,
   );
 });

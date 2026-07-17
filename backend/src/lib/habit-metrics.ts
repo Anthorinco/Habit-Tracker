@@ -1,34 +1,26 @@
+import {
+  currentCalendarDate,
+  startOfCurrentWeekDate,
+} from "./calendar.js";
+
 export type MotivationColor = "verde" | "amarelo" | "vermelho";
 
 const DAY_IN_MS = 24 * 60 * 60 * 1000;
-
-function atUtcMidnight(date: Date) {
-  return new Date(
-    Date.UTC(date.getUTCFullYear(), date.getUTCMonth(), date.getUTCDate()),
-  );
-}
 
 function formatDate(date: Date) {
   return date.toISOString().slice(0, 10);
 }
 
-function startOfUtcWeek(date: Date) {
-  const start = atUtcMidnight(date);
-  const daysSinceMonday = (start.getUTCDay() + 6) % 7;
-  start.setUTCDate(start.getUTCDate() - daysSinceMonday);
-  return start;
-}
-
 export function summarizeHabit(history: Date[], now = new Date()) {
   const completedDates = new Set(history.map(formatDate));
-  const weekStart = startOfUtcWeek(now);
+  const weekStart = new Date(`${startOfCurrentWeekDate(now)}T00:00:00.000Z`);
   const historicoSemanal = Array.from({ length: 7 }, (_, index) => {
     const date = new Date(weekStart.getTime() + index * DAY_IN_MS);
     const data = formatDate(date);
     return { data, concluido: completedDates.has(data) };
   });
 
-  const today = atUtcMidnight(now);
+  const today = new Date(`${currentCalendarDate(now)}T00:00:00.000Z`);
   let cursor = completedDates.has(formatDate(today))
     ? today
     : new Date(today.getTime() - DAY_IN_MS);
@@ -39,10 +31,9 @@ export function summarizeHabit(history: Date[], now = new Date()) {
     cursor = new Date(cursor.getTime() - DAY_IN_MS);
   }
 
-  const month = now.getUTCMonth();
-  const year = now.getUTCFullYear();
-  const conclusoesNoMes = history.filter(
-    (date) => date.getUTCMonth() === month && date.getUTCFullYear() === year,
+  const currentMonth = formatDate(today).slice(0, 7);
+  const conclusoesNoMes = history.filter((date) =>
+    formatDate(date).startsWith(currentMonth),
   ).length;
   const corMotivacao: MotivationColor =
     sequenciaAtual >= 5

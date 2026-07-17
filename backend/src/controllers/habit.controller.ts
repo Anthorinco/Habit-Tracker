@@ -49,8 +49,9 @@ export async function toggleHabit(req: Request, res: Response) {
   if (!body) return;
 
   try {
+    const habitId = body.id_habito;
     const habit = await prisma.habit.findFirst({
-      where: { id: body.habitId, userId: req.userId! },
+      where: { id: habitId, userId: req.userId! },
       select: { id: true },
     });
     if (!habit) {
@@ -58,24 +59,24 @@ export async function toggleHabit(req: Request, res: Response) {
     }
 
     const dataConclusao = new Date(`${body.data}T00:00:00.000Z`);
-    if (body.concluido) {
-      await prisma.historicoHabito.upsert({
-        where: {
-          habitId_dataConclusao: { habitId: body.habitId, dataConclusao },
-        },
-        create: { habitId: body.habitId, dataConclusao },
-        update: {},
-      });
+    const where = {
+      habitId_dataConclusao: { habitId, dataConclusao },
+    };
+    const existing = await prisma.historicoHabito.findUnique({ where });
+    const concluido = !existing;
+
+    if (existing) {
+      await prisma.historicoHabito.delete({ where });
     } else {
-      await prisma.historicoHabito.deleteMany({
-        where: { habitId: body.habitId, dataConclusao },
+      await prisma.historicoHabito.create({
+        data: { habitId, dataConclusao },
       });
     }
 
     return res.status(200).json({
-      habitId: body.habitId,
+      id_habito: habitId,
       data: body.data,
-      concluido: body.concluido,
+      concluido,
     });
   } catch {
     return res.status(500).json({ erro: "Não foi possível atualizar o hábito" });

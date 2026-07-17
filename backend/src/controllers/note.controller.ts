@@ -53,7 +53,7 @@ export async function updateNote(req: Request, res: Response) {
     }
 
     const updated = await prisma.note.update({
-      where: { id },
+      where: { id, userId: req.userId! },
       data: {
         conteudo: body.conteudo,
         ...(body.dataExpiracao !== undefined && {

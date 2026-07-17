@@ -31,6 +31,10 @@ export interface Priority {
   dataCriacao: string;
 }
 
+export interface PrioritySettings {
+  limparNoFimDaSemana: boolean;
+}
+
 export interface Note {
   id: number;
   conteudo: string;

@@ -25,6 +25,8 @@ body {
 
 button:focus-visible,
 input:focus-visible,
+textarea:focus-visible,
+a:focus-visible,
 [role="checkbox"]:focus-visible {
   outline: 2px solid #9dbb92;
   outline-offset: 2px;

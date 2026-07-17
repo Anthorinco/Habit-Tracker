@@ -1,6 +1,13 @@
-import type { Habit, Note, Priority, Session, User } from "./types/Modelo";
+import type {
+  Habit,
+  Note,
+  Priority,
+  PrioritySettings,
+  Session,
+  User,
+} from "./types/Modelo";
 
-const API_URL = import.meta.env.VITE_API_URL ?? "http://localhost:3001/api";
+const API_URL = import.meta.env.VITE_API_URL ?? "/api";
 const SESSION_KEY = "habit-space-session";
 
 export class ApiError extends Error {
@@ -88,21 +95,32 @@ export const api = {
   habits: {
     list: (token: string) => request<Habit[]>("/habits", {}, token),
     create: (token: string, nome: string) =>
-      request<Habit>(
+      request<Pick<Habit, "id" | "nome" | "dataCriacao"> & { userId: number }>(
         "/habits",
         { method: "POST", body: JSON.stringify({ nome }) },
         token,
       ),
-    toggle: (token: string, habitId: number, data: string, concluido: boolean) =>
-      request<void>(
+    toggle: (token: string, id_habito: number, data: string) =>
+      request<{ id_habito: number; data: string; concluido: boolean }>(
         "/habits/toggle",
-        { method: "PATCH", body: JSON.stringify({ habitId, data, concluido }) },
+        { method: "PATCH", body: JSON.stringify({ id_habito, data }) },
         token,
       ),
     remove: (token: string, id: number) =>
       request<void>(`/habits/${id}`, { method: "DELETE" }, token),
   },
   priorities: {
+    settings: (token: string) =>
+      request<PrioritySettings>("/priorities/settings", {}, token),
+    updateSettings: (token: string, limparNoFimDaSemana: boolean) =>
+      request<PrioritySettings>(
+        "/priorities/settings",
+        {
+          method: "PATCH",
+          body: JSON.stringify({ limparNoFimDaSemana }),
+        },
+        token,
+      ),
     list: (token: string) => request<Priority[]>("/priorities", {}, token),
     create: (token: string, descricao: string) =>
       request<Priority>(

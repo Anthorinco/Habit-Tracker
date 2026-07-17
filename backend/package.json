@@ -10,7 +10,7 @@
     "start": "node dist/server.js",
     "typecheck": "tsc --noEmit",
     "test": "node --import tsx --test src/**/*.test.ts",
-    "test:integration": "node --import tsx --test src/integration/*.integration.ts"
+    "test:integration": "npm --prefix .. run build:frontend && node --import tsx --test src/integration/*.integration.ts"
   },
   "keywords": [],
   "type": "module",

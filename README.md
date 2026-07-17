@@ -1,49 +1,66 @@
 # Habit Space
 
-Aplicação para acompanhar hábitos, prioridades semanais e notas. Cada pessoa tem uma conta própria e os dados ficam salvos no PostgreSQL.
+Aplicação para acompanhar hábitos, prioridades semanais e notas. Cada pessoa tem uma conta própria, e os dados ficam salvos no PostgreSQL.
 
-## O que já funciona
+## O que funciona
 
 - cadastro e login com senha protegida;
 - token de acesso salvo no navegador e removido quando expira;
-- hábitos com marcação de segunda a domingo;
-- sequência atual, conclusões do mês e cor de motivação;
-- prioridades semanais com criação, conclusão e exclusão;
-- notas editáveis com salvamento automático e expiração opcional;
-- limpeza automática de notas expiradas e prioridades de semanas anteriores;
-- layout adaptado para computador e celular.
+- hábitos de segunda a domingo, com sequência, total mensal e motivação;
+- prioridades semanais, com opção de ligar ou desligar a limpeza automática;
+- notas com salvamento automático e expiração opcional;
+- separação segura dos dados de cada usuário;
+- calendário no fuso configurado para a aplicação;
+- layout adaptado para computador e celular;
+- frontend e API entregues pelo mesmo servidor no modo de produção.
 
-## Como iniciar
+## Preparar o projeto pela primeira vez
 
-### 1. Backend
+Na raiz do projeto, instale as duas partes:
 
-Entre na pasta `backend`, instale as dependências e crie o arquivo `.env`:
+```bash
+npm install
+npm --prefix backend install
+```
+
+Crie a configuração do backend:
+
+```bash
+cp backend/.env.example backend/.env
+```
+
+Abra `backend/.env`, preencha `DATABASE_URL` e troque `JWT_SECRET` por uma chave longa. Depois aplique as migrações:
 
 ```bash
 cd backend
-cp .env.example .env
-npm install
+npx prisma migrate deploy
+cd ..
 ```
 
-Preencha `DATABASE_URL` e troque `JWT_SECRET` por uma chave longa. Depois aplique as migrações e inicie a API:
+## Iniciar o produto completo
+
+Estes dois comandos constroem frontend e backend e iniciam tudo em `http://localhost:3001`:
 
 ```bash
-npm exec prisma -- migrate deploy
+npm run build
+npm start
+```
+
+A página React e a API usam o mesmo endereço. A checagem técnica fica em `http://localhost:3001/api/health`.
+
+## Desenvolvimento com atualização automática
+
+Durante a programação, use dois terminais:
+
+```bash
+# Terminal 1: API
+npm run dev:backend
+
+# Terminal 2: interface
 npm run dev
 ```
 
-A API abre em `http://localhost:3001`. Para conferir rapidamente, acesse `http://localhost:3001/api/health`.
-
-### 2. Frontend
-
-Em outro terminal, volte à raiz do projeto:
-
-```bash
-npm install
-npm run dev
-```
-
-O endereço mostrado pelo Vite normalmente será `http://localhost:5173`.
+O Vite abre normalmente em `http://localhost:5173` e encaminha `/api` para o backend.
 
 ## Variáveis de ambiente
 
@@ -51,9 +68,10 @@ Backend (`backend/.env`):
 
 ```env
 DATABASE_URL=postgresql://usuario:senha@host:5432/banco
-JWT_SECRET=troque-por-uma-chave-longa
+JWT_SECRET=troque-por-uma-chave-longa-e-aleatoria
 FRONTEND_URL=http://localhost:5173
 PORT=3001
+APP_TIME_ZONE=America/Maceio
 ```
 
 Frontend (`.env`, opcional):
@@ -61,6 +79,8 @@ Frontend (`.env`, opcional):
 ```env
 VITE_API_URL=http://localhost:3001/api
 ```
+
+Sem `VITE_API_URL`, a interface usa `/api`, que é a configuração indicada para o produto completo.
 
 ## Comandos de verificação
 
@@ -71,16 +91,18 @@ npm run lint
 npm run build
 ```
 
-Na pasta `backend`:
+Entre na pasta `backend` e rode:
 
 ```bash
+cd backend
 npm test
 npm run typecheck
-npm run build
 npm run test:integration
+npx prisma validate
+npx prisma migrate status
 ```
 
-O teste de integração usa o banco configurado, cria um usuário temporário, testa todos os módulos e apaga esse usuário ao terminar.
+O teste de integração cria usuários temporários, percorre os módulos e apaga esses usuários ao terminar. Execute-o apenas com um banco de desenvolvimento ou de teste, nunca com o banco de produção.
 
 ## Rotas principais
 
@@ -89,13 +111,22 @@ O teste de integração usa o banco configurado, cria um usuário temporário, t
 | Autenticação | `POST /api/auth/register`, `POST /api/auth/login` |
 | Hábitos | `GET/POST /api/habits`, `PATCH /api/habits/toggle`, `DELETE /api/habits/:id` |
 | Prioridades | `GET/POST /api/priorities`, `PATCH /api/priorities/:id/toggle`, `DELETE /api/priorities/:id` |
+| Preferência semanal | `GET/PATCH /api/priorities/settings` |
 | Notas | `GET/POST /api/notes`, `PUT/DELETE /api/notes/:id` |
 
-Todas as rotas de hábitos, prioridades e notas exigem `Authorization: Bearer <token>`.
+Hábitos, prioridades, preferências e notas exigem `Authorization: Bearer <token>`. Apenas autenticação e `/api/health`, que não expõe dados do usuário, são públicas.
+
+O toggle de hábito recebe:
+
+```json
+{ "id_habito": 1, "data": "2026-07-17" }
+```
+
+Se a marcação já existir, ela é removida; caso contrário, ela é criada.
 
 ## Regras automáticas
 
 - A limpeza roda quando o servidor inicia e depois a cada hora.
-- Notas cuja `dataExpiracao` já passou são removidas.
-- Prioridades de semanas anteriores são removidas quando o usuário mantém a opção `limparPrioridadesNoFimDaSemana` ativa.
+- Notas cuja data de expiração passou são removidas.
+- Prioridades antigas são removidas somente quando o usuário mantém a opção semanal ligada.
 - A cor do hábito usa a sequência atual: verde a partir de 5 dias, amarelo a partir de 2 e vermelho abaixo disso.
