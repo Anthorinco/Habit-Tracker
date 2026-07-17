@@ -7,9 +7,9 @@ import { defineConfig, globalIgnores } from 'eslint/config'
 
 // Regras base do projeto: JS, TypeScript, Hooks e refresh do Vite.
 export default defineConfig([
-  globalIgnores(['dist']),
+  globalIgnores(['dist', 'backend/dist', 'backend/src/generated']),
   {
-    files: ['**/*.{ts,tsx}'],
+    files: ['src/**/*.{ts,tsx}'],
     extends: [
       js.configs.recommended,
       tseslint.configs.recommended,
@@ -19,6 +19,27 @@ export default defineConfig([
     languageOptions: {
       ecmaVersion: 2020,
       globals: globals.browser,
+    },
+  },
+  {
+    files: ['src/components/ui/**/*.{ts,tsx}'],
+    rules: {
+      '@typescript-eslint/no-empty-object-type': 'off',
+      'react-refresh/only-export-components': 'off',
+    },
+  },
+  {
+    files: ['src/Hábitos.tsx'],
+    rules: {
+      'react-refresh/only-export-components': 'off',
+    },
+  },
+  {
+    files: ['backend/src/**/*.ts', 'backend/@types/**/*.d.ts'],
+    extends: [js.configs.recommended, tseslint.configs.recommended],
+    languageOptions: {
+      ecmaVersion: 2023,
+      globals: globals.node,
     },
   },
 ])

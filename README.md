@@ -1,226 +1,101 @@
-# Habit Tracker
+# Habit Space
 
-Aplicação de produtividade para acompanhar hábitos, prioridades e notas.
+Aplicação para acompanhar hábitos, prioridades semanais e notas. Cada pessoa tem uma conta própria e os dados ficam salvos no PostgreSQL.
 
-O projeto está dividido em duas partes:
+## O que já funciona
 
-- `frontend`: interface em React + Vite + Chakra UI
-- `backend`: API em Express + Prisma + PostgreSQL com autenticação via JWT
+- cadastro e login com senha protegida;
+- token de acesso salvo no navegador e removido quando expira;
+- hábitos com marcação de segunda a domingo;
+- sequência atual, conclusões do mês e cor de motivação;
+- prioridades semanais com criação, conclusão e exclusão;
+- notas editáveis com salvamento automático e expiração opcional;
+- limpeza automática de notas expiradas e prioridades de semanas anteriores;
+- layout adaptado para computador e celular.
 
-## Estado atual
+## Como iniciar
 
-- O frontend já exibe três blocos principais: Hábitos, Prioridades Semanais e Notas.
-- Os dados da tela ainda vivem em memória local do React.
-- O backend já tem cadastro, login e middleware de autenticação.
-- A API ainda não está integrada ao fluxo visual do frontend.
+### 1. Backend
 
-## Stack
+Entre na pasta `backend`, instale as dependências e crie o arquivo `.env`:
 
-| Camada | Tecnologias |
-| --- | --- |
-| Frontend | React 19, TypeScript, Vite, Chakra UI, React Icons |
-| Backend | Express 5, Prisma 7, PostgreSQL |
-| Autenticação | bcryptjs, jsonwebtoken |
-| Ferramentas | ESLint, TypeScript, dotenv |
-
-## Estrutura resumida
-
-```text
-Habit Tracker/
-├─ src/
-│  ├─ App.tsx
-│  ├─ Hábitos.tsx
-│  ├─ Prioridades.tsx
-│  ├─ Notas.tsx
-│  ├─ components/ui/
-│  └─ types/
-├─ backend/
-│  ├─ src/
-│  │  ├─ server.ts
-│  │  ├─ prisma.ts
-│  │  └─ routes/
-│  ├─ prisma/
-│  │  └─ schema.prisma
-│  └─ prisma.config.ts
-├─ package.json
-└─ README.md
+```bash
+cd backend
+npm install
+cp .env.example .env
 ```
 
-## Frontend
+Preencha `DATABASE_URL` e troque `JWT_SECRET` por uma chave longa. Depois aplique as migrações e inicie a API:
 
-### `src/App.tsx`
-
-É a tela principal. Hoje ela:
-
-- mantém as listas de hábitos, prioridades e notas em estado local;
-- permite adicionar itens com `prompt`;
-- permite remover itens por índice;
-- organiza a página em duas colunas, com a área de notas fixa na lateral.
-
-### `src/Hábitos.tsx`
-
-- Renderiza uma tabela semanal de hábitos.
-- Mostra os dias da semana como colunas.
-- Exibe checkboxes para marcar execução.
-- Remove um hábito pelo botão de lixeira.
-
-### `src/Prioridades.tsx`
-
-- Renderiza a lista de prioridades da semana.
-- Permite adicionar e remover itens.
-- Usa checkbox por item para marcar conclusão visual.
-
-### `src/Notas.tsx`
-
-- Renderiza notas rápidas.
-- Permite adicionar e remover observações.
-- Fica em uma coluna lateral com comportamento sticky.
-
-## Backend
-
-### Autenticação
-
-O backend expõe duas rotas principais em `/api/auth`:
-
-- `POST /api/auth/register`
-- `POST /api/auth/login`
-
-#### `register`
-
-Recebe:
-
-```json
-{
-  "nome": "Nome do usuário",
-  "email": "usuario@exemplo.com",
-  "senha": "senha"
-}
+```bash
+npm exec prisma -- migrate deploy
+npm run dev
 ```
 
-Fluxo:
+A API abre em `http://localhost:3001`. Para conferir rapidamente, acesse `http://localhost:3001/api/health`.
 
-- verifica se o e-mail já existe;
-- gera hash da senha com `bcryptjs`;
-- cria o usuário no banco;
-- retorna `id`, `nome` e `email`.
+### 2. Frontend
 
-#### `login`
-
-Recebe:
-
-```json
-{
-  "email": "usuario@exemplo.com",
-  "senha": "senha"
-}
-```
-
-Fluxo:
-
-- busca o usuário pelo e-mail;
-- compara a senha com o hash salvo;
-- gera um token JWT com expiração de `7d`;
-- retorna o usuário e o token.
-
-### Middleware de auth
-
-O arquivo `backend/src/routes/auth.middleware.ts` valida requisições protegidas:
-
-- lê o header `Authorization`;
-- exige o formato `Bearer <token>`;
-- valida o token com `JWT_SECRET`;
-- injeta `req.userId` na request.
-
-### Inicialização do servidor
-
-O arquivo `backend/src/server.ts`:
-
-- cria a aplicação Express;
-- habilita `express.json()`;
-- registra as rotas de autenticação;
-- sobe o servidor na porta `3001`.
-
-## Banco de dados
-
-O schema Prisma define estas entidades:
-
-- `User`
-- `Habit`
-- `HistoricoHabito`
-- `Priority`
-- `Note`
-
-Relacionamentos principais:
-
-- um `User` pode ter vários `Habit`, `Priority` e `Note`;
-- `Habit` possui histórico de conclusões em `HistoricoHabito`;
-- os vínculos usam `onDelete: Cascade` para limpar dados relacionados.
-
-## Variáveis de ambiente
-
-O backend depende de:
-
-```env
-DATABASE_URL=postgresql://usuario:senha@host:5432/banco
-JWT_SECRET=uma_chave_longa_e_segura
-```
-
-Observação:
-
-- o frontend, no estado atual, não depende de variáveis de ambiente para funcionar.
-
-## Como rodar
-
-### Frontend
-
-Na raiz do projeto:
+Em outro terminal, volte à raiz do projeto:
 
 ```bash
 npm install
 npm run dev
 ```
 
-Outros comandos úteis:
+O endereço mostrado pelo Vite normalmente será `http://localhost:5173`.
 
-```bash
-npm run build
-npm run lint
+## Variáveis de ambiente
+
+Backend (`backend/.env`):
+
+```env
+DATABASE_URL=postgresql://usuario:senha@host:5432/banco
+JWT_SECRET=troque-por-uma-chave-longa
+FRONTEND_URL=http://localhost:5173
+PORT=3001
 ```
 
-### Backend
+Frontend (`.env`, opcional):
+
+```env
+VITE_API_URL=http://localhost:3001/api
+```
+
+## Comandos de verificação
+
+Na raiz:
+
+```bash
+npm run lint
+npm run build
+```
 
 Na pasta `backend`:
 
 ```bash
-npm install
-npx tsx watch src/server.ts
+npm test
+npm run typecheck
+npm run build
+npm run test:integration
 ```
 
-Validação útil do Prisma:
+O teste de integração usa o banco configurado, cria um usuário temporário, testa todos os módulos e apaga esse usuário ao terminar.
 
-```bash
-npx prisma validate
-```
+## Rotas principais
 
-O backend também tem rotas de hábitos:
+| Módulo | Rotas |
+| --- | --- |
+| Autenticação | `POST /api/auth/register`, `POST /api/auth/login` |
+| Hábitos | `GET/POST /api/habits`, `PATCH /api/habits/toggle`, `DELETE /api/habits/:id` |
+| Prioridades | `GET/POST /api/priorities`, `PATCH /api/priorities/:id/toggle`, `DELETE /api/priorities/:id` |
+| Notas | `GET/POST /api/notes`, `PUT/DELETE /api/notes/:id` |
 
-- `POST /api/habits` cria um hábito
-- `GET /api/habits` lista os hábitos do usuário logado
-- `DELETE /api/habits/:id` remove um hábito
+Todas as rotas de hábitos, prioridades e notas exigem `Authorization: Bearer <token>`.
 
-## Observações importantes
+## Regras automáticas
 
-- O backend ainda não tem scripts próprios definidos em `backend/package.json`.
-- O cliente Prisma gerado em `backend/src/generated/prisma` é código gerado; não é para editar manualmente.
-- A tipagem global de Express para `req.userId` fica em `backend/@types/express.d.ts`.
-- A tela principal ainda usa estado local; se quiser persistência real, o próximo passo é ligar o frontend à API.
-
-## Próximos passos naturais
-
-1. Conectar o frontend ao backend para salvar hábitos, prioridades e notas no banco.
-2. Adicionar validação de payload nas rotas de auth.
-3. Expandir a documentação por endpoint, se o backend crescer.
-
-## Mapa dos arquivos
-
-O mapa arquivo por arquivo está em [docs/ARQUIVOS.md](/home/anthoni/Coding/Projects(React)/Habit%20Tracker/docs/ARQUIVOS.md).
+- A limpeza roda quando o servidor inicia e depois a cada hora.
+- Notas cuja `dataExpiracao` já passou são removidas.
+- Prioridades de semanas anteriores são removidas quando o usuário mantém a opção `limparPrioridadesNoFimDaSemana` ativa.
+- A cor do hábito usa a sequência atual: verde a partir de 5 dias, amarelo a partir de 2 e vermelho abaixo disso.

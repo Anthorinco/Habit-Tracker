@@ -41,13 +41,13 @@ model Habit {
 /// Registro de conclusao de um habito em uma data especifica.
 model HistoricoHabito {
   id           Int      @id @default(autoincrement())
-  dataConclusao DateTime @default(now())
+  dataConclusao DateTime @default(now()) @db.Date
 
   /// Habito associado ao registro.
   habitId Int
   habit   Habit @relation(fields: [habitId], references: [id], onDelete: Cascade)
 
-  /// Evita duplicar a mesma conclusao para o mesmo habito no mesmo instante.
+  /// Evita duplicar a conclusão do mesmo hábito no mesmo dia.
   @@unique([habitId, dataConclusao])
 }
 

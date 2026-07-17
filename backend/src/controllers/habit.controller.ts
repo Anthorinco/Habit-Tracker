@@ -1,94 +1,100 @@
-import { Request, Response } from "express";
+import type { Request, Response } from "express";
 import { prisma } from "../prisma.js";
+import { summarizeHabit } from "../lib/habit-metrics.js";
+import { parseBody, parseId } from "../lib/http-validation.js";
+import { habitSchema, habitToggleSchema } from "../lib/schemas.js";
 
-// Cria um novo habito para o usuario autenticado.
 export async function createHabit(req: Request, res: Response) {
+  const body = parseBody(habitSchema, req.body, res);
+  if (!body) return;
+
   try {
-    // Nome enviado pelo frontend.
-    const { nome } = req.body;
-    // id do usuario injetado pelo middleware de auth.
-    const userId = req.userId;
-
-    // Nome vazio nao faz sentido aqui.
-    if (!nome) {
-      return res.status(400).json({ mensagem: "Nome do habito é obrigatório" });
-    }
-
-    // Sem usuario autenticado nao da para salvar o habito.
-    if (!userId) {
-      return res.status(401).json({ mensagem: "Usuário não autenticado ou inválido" });
-    }
-
-    // Salva o habito ligado ao dono certo.
     const novoHabito = await prisma.habit.create({
-      data: {
-        nome,
-        userId,
-      },
+      data: { nome: body.nome, userId: req.userId! },
     });
-
     return res.status(201).json(novoHabito);
-  } catch (error) {
-    res.status(500).json({ mensagem: "Erro interno no servidor" });
+  } catch {
+    return res.status(500).json({ erro: "Não foi possível criar o hábito" });
   }
 }
 
-// Busca apenas os habitos do usuario autenticado.
 export async function getHabits(req: Request, res: Response) {
   try {
-    const userId = req.userId;
-
-    if (!userId) {
-      return res.status(401).json({ mensagem: "Usuário não autenticado ou inválido" });
-    }
-
     const habitos = await prisma.habit.findMany({
-      where: {
-        userId,
+      where: { userId: req.userId! },
+      include: {
+        historico: {
+          select: { dataConclusao: true },
+          orderBy: { dataConclusao: "asc" },
+        },
       },
+      orderBy: { dataCriacao: "asc" },
     });
 
-    return res.status(200).json(habitos);
-  } catch (error) {
-    res.status(500).json({ mensagem: "Erro interno no servidor" });
+    return res.status(200).json(
+      habitos.map(({ historico, ...habito }) => ({
+        ...habito,
+        ...summarizeHabit(
+          historico.map((registro) => registro.dataConclusao),
+        ),
+      })),
+    );
+  } catch {
+    return res.status(500).json({ erro: "Não foi possível carregar os hábitos" });
   }
 }
 
-// Remove um habito somente se ele pertencer ao usuario logado.
-export async function deleteHabit(req: Request, res: Response) {
+export async function toggleHabit(req: Request, res: Response) {
+  const body = parseBody(habitToggleSchema, req.body, res);
+  if (!body) return;
+
   try {
-    const { id } = req.params;
-    const userId = req.userId;
-    const idNum = Number(id);
-
-    // Protege contra ids que nao viraram numero.
-    if (isNaN(idNum)) {
-      return res.status(400).json({ mensagem: "Id do hábito inválido" });
-    }
-
-    // O parametro precisa existir antes de seguir.
-    if (!id) {
-      return res.status(400).json({ mensagem: "Id do habito é obrigatório" });
-    }
-
-    if (!userId) {
-      return res.status(401).json({ mensagem: "Usuário não autenticado ou inválido" });
-    }
-
-    // Garante que a exclusao so afete o dono do registro.
-    const resultado = await prisma.habit.deleteMany({
-      where: {
-        id: idNum,
-        userId,
-      },
+    const habit = await prisma.habit.findFirst({
+      where: { id: body.habitId, userId: req.userId! },
+      select: { id: true },
     });
-
-    if (resultado.count === 0) {
-      return res.status(404).json({ mensagem: "Habito não encontrado ou não é seu" });
+    if (!habit) {
+      return res.status(404).json({ erro: "Hábito não encontrado" });
     }
 
-    return res.status(200).json({ mensagem: "Habito excluído com sucesso" });
-  } catch (error) {
-    res.status(500).json({ mensagem: "Erro interno no servidor" });
+    const dataConclusao = new Date(`${body.data}T00:00:00.000Z`);
+    if (body.concluido) {
+      await prisma.historicoHabito.upsert({
+        where: {
+          habitId_dataConclusao: { habitId: body.habitId, dataConclusao },
+        },
+        create: { habitId: body.habitId, dataConclusao },
+        update: {},
+      });
+    } else {
+      await prisma.historicoHabito.deleteMany({
+        where: { habitId: body.habitId, dataConclusao },
+      });
+    }
+
+    return res.status(200).json({
+      habitId: body.habitId,
+      data: body.data,
+      concluido: body.concluido,
+    });
+  } catch {
+    return res.status(500).json({ erro: "Não foi possível atualizar o hábito" });
+  }
+}
+
+export async function deleteHabit(req: Request, res: Response) {
+  const id = parseId(req.params.id, res);
+  if (!id) return;
+
+  try {
+    const result = await prisma.habit.deleteMany({
+      where: { id, userId: req.userId! },
+    });
+    if (result.count === 0) {
+      return res.status(404).json({ erro: "Hábito não encontrado" });
+    }
+    return res.status(204).send();
+  } catch {
+    return res.status(500).json({ erro: "Não foi possível excluir o hábito" });
   }
 }

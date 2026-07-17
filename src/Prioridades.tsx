@@ -1,62 +1,64 @@
-import {
-  List,
-  Box,
-  Heading,
-  HStack,
-  Checkbox,
-  Button,
-  Icon,
-} from "@chakra-ui/react";
-import { LuTrash2 } from "react-icons/lu";
-import type { Modelo } from "./types/Modelo";
+import { useState } from "react";
+import { Box, Button, Checkbox, Flex, Heading, HStack, Icon, IconButton, Input, Stack, Text } from "@chakra-ui/react";
+import { LuPlus, LuTarget, LuTrash2 } from "react-icons/lu";
+import type { Priority } from "./types/Modelo";
 
-export function Prioridades({ lista, onAdd, onRemove }: Modelo) {
+interface PrioritiesProps {
+  lista: Priority[];
+  disabled?: boolean;
+  onAdd: (description: string) => Promise<void>;
+  onRemove: (id: number) => Promise<void>;
+  onToggle: (id: number) => Promise<void>;
+}
+
+export function Prioridades({ lista, disabled = false, onAdd, onRemove, onToggle }: PrioritiesProps) {
+  const [draft, setDraft] = useState("");
+  const [pending, setPending] = useState(false);
+
+  const submit = async (event: React.FormEvent<HTMLFormElement>) => {
+    event.preventDefault();
+    const description = draft.trim();
+    if (!description) return;
+    setPending(true);
+    try {
+      await onAdd(description);
+      setDraft("");
+    } catch {
+      // O painel principal mostra o erro da API.
+    } finally {
+      setPending(false);
+    }
+  };
+
+  const run = async (operation: () => Promise<void>) => {
+    setPending(true);
+    try { await operation(); } catch { /* erro exibido no painel */ } finally { setPending(false); }
+  };
+
   return (
-    <Box
-      maxW="full"
-      w="full"
-      p="6"
-      borderWidth="1px"
-      borderRadius="xl"
-      shadow="md"
-      bg="#121212"
-      color="white"
-    >
-      <HStack justify="space-between" mb="4">
-        <Heading size="md">Prioridades Semanais</Heading>
-        <Button size="sm" colorPalette="blue" variant="subtle" onClick={onAdd}>
-          + Adicionar
-        </Button>
-      </HStack>
+    <Box borderWidth="1px" borderColor="#30322f" borderRadius="lg" bg="#191a18" overflow="hidden">
+      <Flex align="center" gap="3" px={{ base: "4", sm: "5" }} py="5" borderBottomWidth="1px" borderColor="#2a2c29">
+        <Flex align="center" justify="center" boxSize="9" borderRadius="md" bg="#242824" color="#a9c99e"><Icon as={LuTarget} boxSize="4" /></Flex>
+        <Box><Heading size="md" letterSpacing="-0.02em">Prioridades da semana</Heading><Text mt="0.5" fontSize="sm" color="#8f938c">O que merece sua atenção antes do resto.</Text></Box>
+      </Flex>
 
-      <List.Root gap="3" variant="plain">
-        {lista.map((item, index) => (
-          <List.Item
-            key={index}
-            p="2"
-            _hover={{ bg: "whiteAlpha.50" }}
-            borderRadius="md"
-          >
-            <HStack justify="space-between" w="full">
-              {/* Checkbox de conclusao para marcar a prioridade como feita. */}
-              <Checkbox.Root size="lg">
-                <Checkbox.HiddenInput />
-                <Checkbox.Control />
-                <Checkbox.Label fontSize="md">{item}</Checkbox.Label>
-              </Checkbox.Root>
-
-              <Button
-                variant="ghost"
-                size="xs"
-                colorPalette="red"
-                onClick={() => onRemove(index)}
-              >
-                <Icon as={LuTrash2} />
-              </Button>
-            </HStack>
-          </List.Item>
+      <Stack gap="0">
+        {lista.map((priority) => (
+          <Flex key={priority.id} align="center" gap="3" px={{ base: "4", sm: "5" }} py="3.5" borderBottomWidth="1px" borderColor="#2a2c29" _hover={{ bg: "#20221f" }}>
+            <Checkbox.Root checked={priority.concluido} disabled={disabled || pending} onCheckedChange={() => { void run(() => onToggle(priority.id)); }} colorPalette="green" flex="1" minW="0">
+              <Checkbox.HiddenInput /><Checkbox.Control borderColor="#565b53" _hover={{ borderColor: "#a9c99e" }} /><Checkbox.Label color={priority.concluido ? "#858a81" : "#e5e7e2"} textDecoration={priority.concluido ? "line-through" : "none"} fontSize="sm" truncate>{priority.descricao}</Checkbox.Label>
+            </Checkbox.Root>
+            <IconButton aria-label={`Remover ${priority.descricao}`} variant="ghost" size="xs" color="#888d85" disabled={disabled || pending} onClick={() => { void run(() => onRemove(priority.id)); }}><Icon as={LuTrash2} /></IconButton>
+          </Flex>
         ))}
-      </List.Root>
+        {lista.length === 0 && <Text px="5" py="7" fontSize="sm" color="#858a81" textAlign="center">Nenhuma prioridade definida para esta semana.</Text>}
+      </Stack>
+
+      <form onSubmit={submit}>
+        <Box p={{ base: "4", sm: "5" }} bg="#171815">
+          <HStack gap="2"><Input value={draft} onChange={(event) => setDraft(event.target.value)} aria-label="Nova prioridade" placeholder="Adicionar prioridade..." disabled={disabled || pending} bg="#141513" borderColor="#3a3d38" /><Button type="submit" aria-label="Adicionar prioridade" colorPalette="green" loading={pending} disabled={disabled || !draft.trim()} px="3"><Icon as={LuPlus} /></Button></HStack>
+        </Box>
+      </form>
     </Box>
   );
 }

@@ -1,100 +1,180 @@
+import { useState } from "react";
 import {
+  Badge,
   Box,
-  Heading,
-  Checkbox,
-  Table,
-  Icon,
-  HStack,
   Button,
+  Checkbox,
+  Flex,
+  Heading,
+  HStack,
+  Icon,
+  IconButton,
+  Input,
+  Stack,
+  Table,
+  Text,
 } from "@chakra-ui/react";
-import { LuFileText, LuLayoutGrid, LuTrash2 } from "react-icons/lu";
-import type { Modelo } from "./types/Modelo";
+import { LuCheck, LuPlus, LuTrash2 } from "react-icons/lu";
+import type { Habit, WeeklyHistory } from "./types/Modelo";
 
-export function Hábitos({ lista, onAdd, onRemove }: Modelo) {
-  // Colunas da matriz semanal de acompanhamento.
-  const dias = [
-    "Segunda-feira",
-    "Terça-feira",
-    "Quarta-feira",
-    "Quinta-feira",
-    "Sexta-feira",
-    "Sábado",
-    "Domingo",
-  ];
+interface HabitsProps {
+  lista: Habit[];
+  hoje: string;
+  disabled?: boolean;
+  onAdd: (nome: string) => Promise<void>;
+  onRemove: (id: number) => Promise<void>;
+  onToggle: (id: number, data: string, concluido: boolean) => Promise<void>;
+}
+
+const motivationColors = {
+  verde: { dot: "#9dbb92", text: "Bom ritmo" },
+  amarelo: { dot: "#d9bd75", text: "Ganhando ritmo" },
+  vermelho: { dot: "#d78278", text: "Recomece hoje" },
+};
+
+function dayLabel(data: string, format: "short" | "long") {
+  return new Intl.DateTimeFormat("pt-BR", {
+    weekday: format,
+    timeZone: "UTC",
+  })
+    .format(new Date(`${data}T00:00:00.000Z`))
+    .replace("-feira", "")
+    .replace(".", "");
+}
+
+function EmptyRow() {
+  return (
+    <Flex direction="column" align="center" justify="center" minH="180px" borderTopWidth="1px" borderColor="#2a2c29" textAlign="center" px="4">
+      <Flex align="center" justify="center" boxSize="9" borderRadius="md" bg="#242824" color="#a9c99e" mb="3"><Icon as={LuCheck} /></Flex>
+      <Text fontSize="sm" fontWeight="medium">Ainda não há hábitos aqui</Text>
+      <Text mt="1" fontSize="xs" color="#858a81">Escreva o primeiro hábito no campo acima.</Text>
+    </Flex>
+  );
+}
+
+function HabitControl({
+  habit,
+  day,
+  disabled,
+  onToggle,
+}: {
+  habit: Habit;
+  day: WeeklyHistory;
+  disabled: boolean;
+  onToggle: HabitsProps["onToggle"];
+}) {
+  return (
+    <Checkbox.Root
+      checked={day.concluido}
+      disabled={disabled}
+      onCheckedChange={(details) => {
+        void onToggle(habit.id, day.data, details.checked === true).catch(() => undefined);
+      }}
+      colorPalette="green"
+      aria-label={`${habit.nome}: ${dayLabel(day.data, "long")}`}
+    >
+      <Checkbox.HiddenInput />
+      <Checkbox.Control borderColor="#565b53" _hover={{ borderColor: "#a9c99e" }} />
+    </Checkbox.Root>
+  );
+}
+
+function HabitDetails({ habit }: { habit: Habit }) {
+  const motivation = motivationColors[habit.corMotivacao];
+  return (
+    <Box minW="0">
+      <Text fontWeight="medium" color="#e5e7e2" truncate>{habit.nome}</Text>
+      <HStack mt="1" gap="2" color="#858a81" fontSize="xs" wrap="wrap">
+        <HStack gap="1"><Box boxSize="1.5" borderRadius="full" bg={motivation.dot} /><Text>{motivation.text}</Text></HStack>
+        <Text>•</Text>
+        <Text>{habit.sequenciaAtual} dias seguidos</Text>
+        <Text>•</Text>
+        <Text>{habit.conclusoesNoMes} no mês</Text>
+      </HStack>
+    </Box>
+  );
+}
+
+export function Hábitos({ lista, hoje, disabled = false, onAdd, onRemove, onToggle }: HabitsProps) {
+  const [draft, setDraft] = useState("");
+  const [touched, setTouched] = useState(false);
+  const [pending, setPending] = useState<string | null>(null);
+  const hasError = touched && !draft.trim();
+  const days = lista[0]?.historicoSemanal ?? [];
+
+  const submit = async (event: React.FormEvent<HTMLFormElement>) => {
+    event.preventDefault();
+    const name = draft.trim();
+    if (!name) return setTouched(true);
+    setPending("new");
+    try {
+      await onAdd(name);
+      setDraft("");
+      setTouched(false);
+    } catch {
+      // O painel principal mostra o erro da API.
+    } finally {
+      setPending(null);
+    }
+  };
 
   return (
-    <Box
-      maxH="1500px"
-      maxW="1400px"
-      w="full"
-      p="6"
-      borderWidth="1px"
-      borderRadius="xl"
-      shadow="md"
-      bg="#121212"
-      color="white"
-    >
-      <HStack justify="space-between" mb="6">
-        <Heading size="md" display="flex" alignItems="center" gap="2">
-          <Icon as={LuLayoutGrid} color="grey.400" />
-          Hábitos
-        </Heading>
-        <Button size="sm" colorPalette="blue" variant="subtle" onClick={onAdd}>
-          + Novo Hábito
-        </Button>
-      </HStack>
+    <Box borderWidth="1px" borderColor="#30322f" borderRadius="lg" bg="#191a18" overflow="hidden">
+      <Flex direction={{ base: "column", md: "row" }} justify="space-between" gap="4" px={{ base: "4", sm: "5" }} py="5" borderBottomWidth="1px" borderColor="#2a2c29">
+        <Box>
+          <Heading size="md" letterSpacing="-0.02em">Hábitos</Heading>
+          <Text mt="1" fontSize="sm" color="#8f938c">Marque os pequenos compromissos que sustentam sua semana.</Text>
+        </Box>
+        <Badge alignSelf={{ base: "flex-start", md: "center" }} colorPalette="green" variant="subtle" borderRadius="sm">
+          {dayLabel(hoje, "long")} em destaque
+        </Badge>
+      </Flex>
 
-      <Table.Root size="sm" variant="line">
-        <Table.Header>
-          <Table.Row borderColor="grey.800">
-            <Table.ColumnHeader color="grey.400" fontWeight="medium">
-              Habitos
-            </Table.ColumnHeader>
-            {dias.map((dia) => (
-              <Table.ColumnHeader key={dia} color="grey.400" textAlign="center">
-                {dia.substring(0, 3)}{" "}
-              </Table.ColumnHeader>
-            ))}
-            <Table.ColumnHeader></Table.ColumnHeader>
-          </Table.Row>
-        </Table.Header>
+      <form onSubmit={submit}>
+        <Box px={{ base: "4", sm: "5" }} py="3.5" borderBottomWidth="1px" borderColor="#2a2c29">
+          <HStack gap="2" align="flex-start">
+            <Box flex="1">
+              <Input value={draft} onChange={(event) => setDraft(event.target.value)} onBlur={() => setTouched(true)} aria-label="Novo hábito" aria-invalid={hasError} placeholder="Adicionar um hábito..." disabled={disabled || pending !== null} bg="#141513" borderColor={hasError ? "#d78278" : "#3a3d38"} />
+              {hasError && <Text mt="1.5" fontSize="xs" color="#e39b93" role="alert">Escreva um hábito antes de adicionar.</Text>}
+            </Box>
+            <Button type="submit" colorPalette="green" loading={pending === "new"} disabled={disabled || !draft.trim()} minW="auto" px="3">
+              <Icon as={LuPlus} /><Text display={{ base: "none", sm: "block" }}>Adicionar</Text>
+            </Button>
+          </HStack>
+        </Box>
+      </form>
 
-        <Table.Body>
-          {lista.map((item, index) => (
-            <Table.Row
-              key={index}
-              borderColor="grey.800"
-              _hover={{ bg: "whiteAlpha.50" }}
-            >
-              <Table.Cell display="flex" alignItems="center" gap="2" py="4">
-                <Icon as={LuFileText} color="grey.500" />
-                {item}
-              </Table.Cell>
+      {lista.length === 0 ? <EmptyRow /> : (
+        <>
+          <Box display={{ base: "none", md: "block" }} overflowX="auto">
+            <Table.Root size="sm" minW="790px">
+              <Table.Header bg="#171815">
+                <Table.Row borderColor="#2a2c29">
+                  <Table.ColumnHeader color="#858a81" fontWeight="medium" py="3" pl="5">Hábito e ritmo</Table.ColumnHeader>
+                  {days.map((day) => <Table.ColumnHeader key={day.data} color={day.data === hoje ? "#bfdab4" : "#858a81"} fontWeight={day.data === hoje ? "semibold" : "medium"} textAlign="center" bg={day.data === hoje ? "#222a21" : undefined} px="2">{dayLabel(day.data, "short")}</Table.ColumnHeader>)}
+                  <Table.ColumnHeader w="42px" />
+                </Table.Row>
+              </Table.Header>
+              <Table.Body>
+                {lista.map((habit) => (
+                  <Table.Row key={habit.id} borderColor="#2a2c29" _hover={{ bg: "#20221f" }}>
+                    <Table.Cell py="3.5" pl="5" maxW="330px"><HabitDetails habit={habit} /></Table.Cell>
+                    {habit.historicoSemanal.map((day) => <Table.Cell key={day.data} textAlign="center" bg={day.data === hoje ? "#1d211c" : undefined} px="2"><HabitControl habit={habit} day={day} disabled={disabled || pending !== null} onToggle={onToggle} /></Table.Cell>)}
+                    <Table.Cell px="1"><IconButton aria-label={`Remover ${habit.nome}`} variant="ghost" size="xs" color="#888d85" disabled={disabled || pending !== null} onClick={() => { setPending(`remove-${habit.id}`); void onRemove(habit.id).catch(() => undefined).finally(() => setPending(null)); }}><Icon as={LuTrash2} /></IconButton></Table.Cell>
+                  </Table.Row>
+                ))}
+              </Table.Body>
+            </Table.Root>
+          </Box>
 
-              {dias.map((dia) => (
-                <Table.Cell key={dia} textAlign="center">
-                  {/* Checkbox visual. Hoje ele nao persiste estado nem conversa com o backend. */}
-                  <Checkbox.Root size="lg" colorPalette="blue">
-                    <Checkbox.HiddenInput />
-                    <Checkbox.Control />
-                  </Checkbox.Root>
-                </Table.Cell>
-              ))}
-
-              <Table.Cell>
-                <Button
-                  variant="ghost"
-                  size="xs"
-                  colorPalette="red"
-                  onClick={() => onRemove(index)}
-                >
-                  <Icon as={LuTrash2} />
-                </Button>
-              </Table.Cell>
-            </Table.Row>
-          ))}
-        </Table.Body>
-      </Table.Root>
+          <Stack display={{ base: "flex", md: "none" }} gap="0">
+            {lista.map((habit) => <Box key={habit.id} px="4" py="4" borderBottomWidth="1px" borderColor="#2a2c29">
+              <Flex justify="space-between" gap="3" align="flex-start"><HabitDetails habit={habit} /><IconButton aria-label={`Remover ${habit.nome}`} variant="ghost" size="xs" color="#888d85" disabled={disabled || pending !== null} onClick={() => { setPending(`remove-${habit.id}`); void onRemove(habit.id).catch(() => undefined).finally(() => setPending(null)); }}><Icon as={LuTrash2} /></IconButton></Flex>
+              <Flex mt="4" gap="1.5" justify="space-between">{habit.historicoSemanal.map((day) => <Stack key={day.data} gap="1" align="center"><Text fontSize="10px" color={day.data === hoje ? "#bfdab4" : "#7f847c"} fontWeight={day.data === hoje ? "bold" : "medium"}>{dayLabel(day.data, "short").slice(0, 1)}</Text><HabitControl habit={habit} day={day} disabled={disabled || pending !== null} onToggle={onToggle} /></Stack>)}</Flex>
+            </Box>)}
+          </Stack>
+        </>
+      )}
     </Box>
   );
 }

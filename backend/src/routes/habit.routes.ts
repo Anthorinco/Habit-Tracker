@@ -4,6 +4,7 @@ import {
   createHabit,
   deleteHabit,
   getHabits,
+  toggleHabit,
 } from "../controllers/habit.controller.js";
 
 const router = Router();
@@ -13,6 +14,8 @@ const router = Router();
 router.post("/", authMiddleware, createHabit);
 // Lista os habitos do usuario logado.
 router.get("/", authMiddleware, getHabits);
+// Marca ou desmarca um dia do hábito de forma idempotente.
+router.patch("/toggle", authMiddleware, toggleHabit);
 // Remove um habito pelo id.
 router.delete("/:id", authMiddleware, deleteHabit);
 

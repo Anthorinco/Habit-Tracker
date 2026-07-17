@@ -1,60 +1,33 @@
 # Mapa do projeto
 
-Este arquivo resume, em linguagem simples, o que faz cada arquivo principal do projeto.
-
 ## Frontend
 
 | Arquivo | O que faz |
 | --- | --- |
-| `index.html` | Carrega o app dentro do `#root` |
-| `src/main.tsx` | Ponto de entrada do React |
-| `src/App.tsx` | Tela principal com hábitos, prioridades e notas |
-| `src/App.css` | Folha de estilo global do app |
-| `src/Hábitos.tsx` | Tabela semanal de hábitos |
-| `src/Prioridades.tsx` | Lista de prioridades da semana |
-| `src/Notas.tsx` | Painel lateral de notas rápidas |
-| `src/types/Modelo.ts` | Tipo compartilhado dos componentes de lista |
-| `src/components/ui/provider.tsx` | Provider do Chakra e do tema |
-| `src/components/ui/color-mode.tsx` | Funções de tema claro/escuro |
-| `src/components/ui/toaster.tsx` | Sistema de mensagens rápidas |
-| `src/components/ui/tooltip.tsx` | Wrapper de tooltip do Chakra |
+| `src/App.tsx` | Carrega dados reais e monta o painel principal |
+| `src/AuthScreen.tsx` | Cadastro e login |
+| `src/api.ts` | Centraliza chamadas HTTP e armazenamento do token |
+| `src/Hábitos.tsx` | Histórico semanal e métricas dos hábitos |
+| `src/Prioridades.tsx` | Prioridades semanais |
+| `src/Notas.tsx` | Notas com autosave e expiração |
+| `src/types/Modelo.ts` | Formatos dos dados retornados pela API |
 
 ## Backend
 
 | Arquivo | O que faz |
 | --- | --- |
-| `backend/src/server.ts` | Sobe a API e registra as rotas |
-| `backend/src/prisma.ts` | Cria o cliente Prisma com PostgreSQL |
-| `backend/src/routes/auth.routes.ts` | Cadastro e login |
-| `backend/src/routes/auth.middleware.ts` | Proteção das rotas com JWT |
-| `backend/src/routes/habit.routes.ts` | Rotas de criar, listar e remover hábitos |
-| `backend/src/controllers/habit.controller.ts` | Regras do CRUD de hábitos |
-| `backend/@types/express.d.ts` | Adiciona `req.userId` ao Express |
+| `backend/src/server.ts` | Configura CORS, rotas e inicialização da API |
+| `backend/src/routes/*.routes.ts` | Define os endereços de cada módulo |
+| `backend/src/controllers/*.controller.ts` | Executa as regras de cada módulo |
+| `backend/src/lib/schemas.ts` | Valida os dados recebidos |
+| `backend/src/lib/habit-metrics.ts` | Calcula semana, sequência, mês e motivação |
+| `backend/src/services/cleanup.service.ts` | Remove dados vencidos automaticamente |
+| `backend/src/integration/api.integration.ts` | Testa a API completa com um usuário temporário |
 
-## Prisma e banco
-
-| Arquivo | O que faz |
-| --- | --- |
-| `backend/prisma/schema.prisma` | Modela as tabelas do banco |
-| `backend/prisma.config.ts` | Configuração do Prisma CLI |
-| `backend/prisma/migrations/...` | Histórico das mudanças no banco |
-
-## Configuração
+## Banco
 
 | Arquivo | O que faz |
 | --- | --- |
-| `package.json` | Scripts e dependências do frontend |
-| `backend/package.json` | Scripts e dependências do backend |
-| `vite.config.ts` | Configuração do Vite |
-| `eslint.config.js` | Regras de lint |
-| `tsconfig.json` | Configuração raiz do TypeScript |
-| `tsconfig.app.json` | TypeScript do frontend |
-| `tsconfig.node.json` | TypeScript do Vite |
-| `backend/tsconfig.json` | TypeScript do backend |
-
-## O que eu deixei de fora
-
-- `node_modules`
-- arquivos gerados pelo Prisma em `backend/src/generated/prisma/`
-- lockfiles, porque eles só travam versões
-
+| `backend/prisma/schema.prisma` | Define as tabelas e relações |
+| `backend/prisma/migrations/` | Guarda as mudanças aplicadas ao PostgreSQL |
+| `backend/prisma.config.ts` | Liga o Prisma à variável `DATABASE_URL` |
