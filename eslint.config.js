@@ -7,7 +7,7 @@ import { defineConfig, globalIgnores } from 'eslint/config'
 
 // Regras base do projeto: JS, TypeScript, Hooks e refresh do Vite.
 export default defineConfig([
-  globalIgnores(['dist', 'backend/dist', 'backend/src/generated']),
+  globalIgnores(['dist', 'backend/dist']),
   {
     files: ['src/**/*.{ts,tsx}'],
     extends: [

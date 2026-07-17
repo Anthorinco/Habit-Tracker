@@ -25,3 +25,4 @@ dist-ssr
 .Plan
 .env
 /src/generated/prisma
+/backend/src/generated/prisma

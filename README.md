@@ -21,8 +21,8 @@ Entre na pasta `backend`, instale as dependências e crie o arquivo `.env`:
 
 ```bash
 cd backend
-npm install
 cp .env.example .env
+npm install
 ```
 
 Preencha `DATABASE_URL` e troque `JWT_SECRET` por uma chave longa. Depois aplique as migrações e inicie a API:
