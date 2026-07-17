@@ -9,6 +9,10 @@ import priorityRoutes from "./routes/priority.routes.js";
 import { scheduleCleanup } from "./services/cleanup.service.js";
 
 export const app = express();
+
+// O Vercel carrega esta aplicação diretamente como uma função.
+// Em desenvolvimento local, a função startServer abaixo continua abrindo a porta.
+export default app;
 const allowedOrigins = (process.env.FRONTEND_URL ?? "http://localhost:5173")
   .split(",")
   .map((origin) => origin.trim());
