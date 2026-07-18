@@ -4,6 +4,9 @@ import { summarizeHabit } from "../lib/habit-metrics.js";
 import { parseBody, parseId } from "../lib/http-validation.js";
 import { habitSchema, habitToggleSchema } from "../lib/schemas.js";
 
+/**
+ * Cria um novo hábito para o usuário autenticado.
+ */
 export async function createHabit(req: Request, res: Response) {
   const body = parseBody(habitSchema, req.body, res);
   if (!body) return;
@@ -18,6 +21,9 @@ export async function createHabit(req: Request, res: Response) {
   }
 }
 
+/**
+ * Retorna todos os hábitos do usuário autenticado acompanhados de suas métricas consolidadas.
+ */
 export async function getHabits(req: Request, res: Response) {
   try {
     const habitos = await prisma.habit.findMany({
@@ -31,6 +37,7 @@ export async function getHabits(req: Request, res: Response) {
       orderBy: { dataCriacao: "asc" },
     });
 
+    // Formata o histórico calculando sequências de dias concluídos e cor de motivação
     return res.status(200).json(
       habitos.map(({ historico, ...habito }) => ({
         ...habito,
@@ -44,6 +51,9 @@ export async function getHabits(req: Request, res: Response) {
   }
 }
 
+/**
+ * Alterna a conclusão de um hábito (marca ou desmarca) em uma data específica.
+ */
 export async function toggleHabit(req: Request, res: Response) {
   const body = parseBody(habitToggleSchema, req.body, res);
   if (!body) return;
@@ -65,6 +75,7 @@ export async function toggleHabit(req: Request, res: Response) {
     const existing = await prisma.historicoHabito.findUnique({ where });
     const concluido = !existing;
 
+    // Se já existe um registro, desmarca (remove). Caso contrário, marca (cria).
     if (existing) {
       await prisma.historicoHabito.delete({ where });
     } else {
@@ -83,6 +94,9 @@ export async function toggleHabit(req: Request, res: Response) {
   }
 }
 
+/**
+ * Exclui um hábito do usuário autenticado.
+ */
 export async function deleteHabit(req: Request, res: Response) {
   const id = parseId(req.params.id, res);
   if (!id) return;
@@ -99,3 +113,4 @@ export async function deleteHabit(req: Request, res: Response) {
     return res.status(500).json({ erro: "Não foi possível excluir o hábito" });
   }
 }
+

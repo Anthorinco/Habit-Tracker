@@ -7,9 +7,14 @@ import type {
   User,
 } from "./types/Modelo";
 
+// URL base da API obtida das variáveis de ambiente
 const API_URL = import.meta.env.VITE_API_URL ?? "/api";
+// Chave utilizada para persistir a sessão no localStorage
 const SESSION_KEY = "habit-space-session";
 
+/**
+ * Erro personalizado para lidar com respostas de erro HTTP da API.
+ */
 export class ApiError extends Error {
   status: number;
 
@@ -19,6 +24,9 @@ export class ApiError extends Error {
   }
 }
 
+/**
+ * Verifica se um token JWT está expirado descriptografando seu payload.
+ */
 function tokenExpired(token: string) {
   try {
     const payload = token.split(".")[1];
@@ -32,6 +40,9 @@ function tokenExpired(token: string) {
   }
 }
 
+/**
+ * Carrega a sessão do usuário salva localmente, limpando-a se estiver expirada.
+ */
 export function loadSession(): Session | null {
   try {
     const stored = localStorage.getItem(SESSION_KEY);
@@ -48,11 +59,17 @@ export function loadSession(): Session | null {
   }
 }
 
+/**
+ * Salva ou remove a sessão do usuário no localStorage.
+ */
 export function saveSession(session: Session | null) {
   if (session) localStorage.setItem(SESSION_KEY, JSON.stringify(session));
   else localStorage.removeItem(SESSION_KEY);
 }
 
+/**
+ * Wrapper genérico para requisições HTTP do Fetch API.
+ */
 async function request<T>(
   path: string,
   options: RequestInit = {},
@@ -81,7 +98,11 @@ async function request<T>(
   return body as T;
 }
 
+/**
+ * Objeto contendo os serviços de comunicação com os endpoints da API.
+ */
 export const api = {
+  // Serviços de Autenticação
   register: (data: { nome: string; email: string; senha: string }) =>
     request<{ usuario: User }>("/auth/register", {
       method: "POST",
@@ -92,6 +113,8 @@ export const api = {
       method: "POST",
       body: JSON.stringify(data),
     }),
+
+  // Serviços de Hábitos
   habits: {
     list: (token: string) => request<Habit[]>("/habits", {}, token),
     create: (token: string, nome: string) =>
@@ -109,6 +132,8 @@ export const api = {
     remove: (token: string, id: number) =>
       request<void>(`/habits/${id}`, { method: "DELETE" }, token),
   },
+
+  // Serviços de Prioridades
   priorities: {
     settings: (token: string) =>
       request<PrioritySettings>("/priorities/settings", {}, token),
@@ -133,6 +158,8 @@ export const api = {
     remove: (token: string, id: number) =>
       request<void>(`/priorities/${id}`, { method: "DELETE" }, token),
   },
+
+  // Serviços de Notas Rápidas
   notes: {
     list: (token: string) => request<Note[]>("/notes", {}, token),
     create: (token: string) =>
@@ -159,3 +186,4 @@ export const api = {
       request<void>(`/notes/${id}`, { method: "DELETE" }, token),
   },
 };
+

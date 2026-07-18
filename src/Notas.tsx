@@ -11,6 +11,9 @@ interface NotesProps {
   onSave: (id: number, content: string, expiration: string | null) => Promise<void>;
 }
 
+/**
+ * Converte data ISO UTC do backend para o formato ISO local ('YYYY-MM-DDTHH:MM') aceito pelo input do navegador.
+ */
 function toLocalInput(value: string | null) {
   if (!value) return "";
   const date = new Date(value);
@@ -18,15 +21,23 @@ function toLocalInput(value: string | null) {
   return local.toISOString().slice(0, 16);
 }
 
+/**
+ * Componente interno que renderiza uma nota individual e gerencia seu salvamento automático temporizado (debounce).
+ */
 function EditableNote({ note, disabled, onRemove, onSave }: { note: Note; disabled: boolean; onRemove: NotesProps["onRemove"]; onSave: NotesProps["onSave"] }) {
   const [content, setContent] = useState(note.conteudo);
   const [expiration, setExpiration] = useState(() => toLocalInput(note.dataExpiracao));
   const [status, setStatus] = useState<"saved" | "pending" | "saving" | "error">("saved");
+  
+  // Controle de revisões para evitar conflitos de salvamento assíncrono concorrente
   const revision = useRef(0);
   const requestedRevision = useRef<number | null>(null);
   const timer = useRef<number | null>(null);
   const originalExpiration = toLocalInput(note.dataExpiracao);
 
+  /**
+   * Envia as alterações da nota para o backend.
+   */
   const save = useCallback((currentRevision: number) => {
     if (requestedRevision.current === currentRevision) return;
     requestedRevision.current = currentRevision;
@@ -44,6 +55,7 @@ function EditableNote({ note, disabled, onRemove, onSave }: { note: Note; disabl
       });
   }, [content, expiration, note.id, onSave]);
 
+  // Effect para lidar com o auto-save de forma debounced (700ms após o usuário parar de digitar)
   useEffect(() => {
     if (disabled || (content === note.conteudo && expiration === originalExpiration)) return;
     const currentRevision = revision.current;
@@ -57,6 +69,9 @@ function EditableNote({ note, disabled, onRemove, onSave }: { note: Note; disabl
     };
   }, [content, disabled, expiration, note.conteudo, originalExpiration, save]);
 
+  /**
+   * Força o salvamento imediato quando o input perde o foco.
+   */
   const saveOnBlur = () => {
     if (disabled || (content === note.conteudo && expiration === originalExpiration)) return;
     if (timer.current !== null) window.clearTimeout(timer.current);
@@ -68,10 +83,12 @@ function EditableNote({ note, disabled, onRemove, onSave }: { note: Note; disabl
 
   return (
     <Box px={{ base: "4", sm: "5" }} py="4" borderBottomWidth="1px" borderColor="#2a2c29" _hover={{ bg: "#20221f" }}>
+      {/* Campo de edição do conteúdo e botão de excluir */}
       <Flex align="flex-start" gap="2">
         <Textarea value={content} onChange={(event) => { revision.current += 1; setContent(event.target.value); setStatus("pending"); }} onBlur={saveOnBlur} aria-label="Conteúdo da nota" placeholder="Escreva sua nota..." autoresize minH="72px" resize="none" disabled={disabled} bg="#141513" borderColor="#3a3d38" />
         <IconButton aria-label="Remover nota" variant="ghost" size="xs" color="#888d85" disabled={disabled} onClick={() => { if (window.confirm("Remover esta nota?")) void onRemove(note.id).catch(() => undefined); }}><Icon as={LuTrash2} /></IconButton>
       </Flex>
+      {/* Rodapé da nota com data de expiração e indicador de status de salvamento */}
       <Flex mt="2.5" direction={{ base: "column", sm: "row" }} align={{ base: "stretch", sm: "center" }} justify="space-between" gap="2">
         <Box>
           <label className="field-label field-label--muted" htmlFor={`expiracao-${note.id}`}>Expirar em (opcional)</label>
@@ -83,8 +100,15 @@ function EditableNote({ note, disabled, onRemove, onSave }: { note: Note; disabl
   );
 }
 
+/**
+ * Painel que gerencia e lista as Notas Rápidas.
+ */
 export function Notas({ lista, disabled = false, onAdd, onRemove, onSave }: NotesProps) {
   const [adding, setAdding] = useState(false);
+  
+  /**
+   * Adiciona uma nova nota rápida.
+   */
   const add = async () => {
     setAdding(true);
     try { await onAdd(); } catch { /* erro exibido no painel */ } finally { setAdding(false); }
@@ -92,11 +116,13 @@ export function Notas({ lista, disabled = false, onAdd, onRemove, onSave }: Note
 
   return (
     <Box id="notas" scrollMarginTop="4" borderWidth="1px" borderColor="#30322f" borderRadius="lg" bg="#191a18" overflow="hidden">
+      {/* Cabeçalho da Seção de Notas */}
       <Flex align="center" justify="space-between" gap="3" px={{ base: "4", sm: "5" }} py="5" borderBottomWidth="1px" borderColor="#2a2c29">
         <HStack gap="3"><Flex align="center" justify="center" boxSize="9" borderRadius="md" bg="#29261e" color="#d9bd75"><Icon as={LuNotebookText} boxSize="4" /></Flex><Box><Heading size="md" letterSpacing="-0.02em">Notas rápidas</Heading><Text mt="0.5" fontSize="sm" color="#8f938c">Salvas automaticamente.</Text></Box></HStack>
         <Button aria-label="Criar nota" size="sm" colorPalette="yellow" loading={adding} disabled={disabled || adding} onClick={() => { void add(); }}><Icon as={LuPlus} /><Text display={{ base: "none", sm: "block" }}>Nova</Text></Button>
       </Flex>
 
+      {/* Lista de Notas */}
       <Stack gap="0">
         {lista.map((note) => <EditableNote key={note.id} note={note} disabled={disabled} onRemove={onRemove} onSave={onSave} />)}
         {lista.length === 0 && <Text px="5" py="7" fontSize="sm" color="#858a81" textAlign="center">Crie uma nota para guardar uma ideia ou lembrete.</Text>}
@@ -104,3 +130,4 @@ export function Notas({ lista, disabled = false, onAdd, onRemove, onSave }: Note
     </Box>
   );
 }
+

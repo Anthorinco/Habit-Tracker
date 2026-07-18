@@ -3,6 +3,9 @@ import { prisma } from "../prisma.js";
 import { parseBody, parseId } from "../lib/http-validation.js";
 import { prioritySchema, prioritySettingsSchema } from "../lib/schemas.js";
 
+/**
+ * Carrega a preferência de limpar prioridades no fim da semana do usuário autenticado.
+ */
 export async function getPrioritySettings(req: Request, res: Response) {
   try {
     const user = await prisma.user.findUnique({
@@ -20,6 +23,9 @@ export async function getPrioritySettings(req: Request, res: Response) {
   }
 }
 
+/**
+ * Atualiza a configuração de limpeza automática de prioridades no fim da semana.
+ */
 export async function updatePrioritySettings(req: Request, res: Response) {
   const body = parseBody(prioritySettingsSchema, req.body, res);
   if (!body) return;
@@ -40,6 +46,9 @@ export async function updatePrioritySettings(req: Request, res: Response) {
   }
 }
 
+/**
+ * Lista todas as prioridades ativas do usuário autenticado.
+ */
 export async function getPriorities(req: Request, res: Response) {
   try {
     const priorities = await prisma.priority.findMany({
@@ -52,6 +61,9 @@ export async function getPriorities(req: Request, res: Response) {
   }
 }
 
+/**
+ * Cria uma nova prioridade semanal para o usuário autenticado.
+ */
 export async function createPriority(req: Request, res: Response) {
   const body = parseBody(prioritySchema, req.body, res);
   if (!body) return;
@@ -66,6 +78,9 @@ export async function createPriority(req: Request, res: Response) {
   }
 }
 
+/**
+ * Alterna o estado de conclusão (feito/a fazer) de uma prioridade específica.
+ */
 export async function togglePriority(req: Request, res: Response) {
   const id = parseId(req.params.id, res);
   if (!id) return;
@@ -88,6 +103,9 @@ export async function togglePriority(req: Request, res: Response) {
   }
 }
 
+/**
+ * Remove uma prioridade do usuário.
+ */
 export async function deletePriority(req: Request, res: Response) {
   const id = parseId(req.params.id, res);
   if (!id) return;
@@ -104,3 +122,4 @@ export async function deletePriority(req: Request, res: Response) {
     return res.status(500).json({ erro: "Não foi possível excluir a prioridade" });
   }
 }
+

@@ -7,6 +7,9 @@ import { loginSchema, registerSchema } from "../lib/schemas.js";
 
 const router = Router();
 
+/**
+ * Endpoint de Registro: Cadastra um novo usuário criptografando a senha.
+ */
 router.post("/register", async (req, res) => {
   const body = parseBody(registerSchema, req.body, res);
   if (!body) return;
@@ -20,6 +23,7 @@ router.post("/register", async (req, res) => {
       return res.status(409).json({ erro: "Este e-mail já está cadastrado" });
     }
 
+    // Criptografa a senha do usuário com 10 rounds do bcrypt
     const hash = await bcrypt.hash(body.senha, 10);
     const novoUsuario = await prisma.user.create({
       data: { nome: body.nome, email: body.email, senha: hash },
@@ -38,6 +42,9 @@ router.post("/register", async (req, res) => {
   }
 });
 
+/**
+ * Endpoint de Login: Valida credenciais e gera um token JWT de acesso (válido por 7 dias).
+ */
 router.post("/login", async (req, res) => {
   const body = parseBody(loginSchema, req.body, res);
   if (!body) return;
@@ -55,6 +62,7 @@ router.post("/login", async (req, res) => {
       return res.status(500).json({ erro: "Autenticação não configurada" });
     }
 
+    // Gera o token JWT para o usuário logado
     const token = jwt.sign({ id: usuario.id }, secret, { expiresIn: "7d" });
     return res.status(200).json({
       mensagem: "Usuário logado com sucesso!",
@@ -67,3 +75,4 @@ router.post("/login", async (req, res) => {
 });
 
 export default router;
+

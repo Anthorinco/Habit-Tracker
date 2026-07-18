@@ -19,19 +19,23 @@ import type { Habit, WeeklyHistory } from "./types/Modelo";
 
 interface HabitsProps {
   lista: Habit[];
-  hoje: string;
+  hoje: string; // Data de hoje no formato YYYY-MM-DD
   disabled?: boolean;
   onAdd: (nome: string) => Promise<void>;
   onRemove: (id: number) => Promise<void>;
   onToggle: (id: number, data: string) => Promise<void>;
 }
 
+// Mapeamento de cores e textos com base no status do hábito (corMotivacao)
 const motivationColors = {
   verde: { dot: "#9dbb92", text: "Bom ritmo" },
   amarelo: { dot: "#d9bd75", text: "Ganhando ritmo" },
   vermelho: { dot: "#d78278", text: "Recomece hoje" },
 };
 
+/**
+ * Retorna o nome formatado do dia da semana (ex: 'seg', 'segunda').
+ */
 function dayLabel(data: string, format: "short" | "long") {
   return new Intl.DateTimeFormat("pt-BR", {
     weekday: format,
@@ -42,6 +46,9 @@ function dayLabel(data: string, format: "short" | "long") {
     .replace(".", "");
 }
 
+/**
+ * Exibe um estado vazio caso o usuário não possua hábitos cadastrados.
+ */
 function EmptyRow() {
   return (
     <Flex direction="column" align="center" justify="center" minH="180px" borderTopWidth="1px" borderColor="#2a2c29" textAlign="center" px="4">
@@ -52,6 +59,9 @@ function EmptyRow() {
   );
 }
 
+/**
+ * Componente que gerencia o estado do Checkbox para marcar/desmarcar um hábito em um dia da semana.
+ */
 function HabitControl({
   habit,
   day,
@@ -79,6 +89,9 @@ function HabitControl({
   );
 }
 
+/**
+ * Componente de detalhe do hábito, mostrando nome, status de motivação e estatísticas.
+ */
 function HabitDetails({ habit }: { habit: Habit }) {
   const motivation = motivationColors[habit.corMotivacao];
   return (
@@ -95,6 +108,9 @@ function HabitDetails({ habit }: { habit: Habit }) {
   );
 }
 
+/**
+ * Painel principal para gerenciamento e visualização semanal de hábitos.
+ */
 export function Hábitos({ lista, hoje, disabled = false, onAdd, onRemove, onToggle }: HabitsProps) {
   const [draft, setDraft] = useState("");
   const [touched, setTouched] = useState(false);
@@ -102,6 +118,9 @@ export function Hábitos({ lista, hoje, disabled = false, onAdd, onRemove, onTog
   const hasError = touched && !draft.trim();
   const days = lista[0]?.historicoSemanal ?? [];
 
+  /**
+   * Trata a criação de um novo hábito.
+   */
   const submit = async (event: React.FormEvent<HTMLFormElement>) => {
     event.preventDefault();
     const name = draft.trim();
@@ -112,12 +131,15 @@ export function Hábitos({ lista, hoje, disabled = false, onAdd, onRemove, onTog
       setDraft("");
       setTouched(false);
     } catch {
-      // O painel principal mostra o erro da API.
+      // Erro é tratado globalmente no componente pai
     } finally {
       setPending(null);
     }
   };
 
+  /**
+   * Trata a exclusão de um hábito existente.
+   */
   const remove = (habit: Habit) => {
     if (!window.confirm(`Remover o hábito "${habit.nome}" e todo o histórico?`)) return;
     setPending(`remove-${habit.id}`);
@@ -126,6 +148,7 @@ export function Hábitos({ lista, hoje, disabled = false, onAdd, onRemove, onTog
 
   return (
     <Box id="habitos" scrollMarginTop="4" borderWidth="1px" borderColor="#30322f" borderRadius="lg" bg="#191a18" overflow="hidden">
+      {/* Cabeçalho da Seção */}
       <Flex direction={{ base: "column", md: "row" }} justify="space-between" gap="4" px={{ base: "4", sm: "5" }} py="5" borderBottomWidth="1px" borderColor="#2a2c29">
         <Box>
           <Heading size="md" letterSpacing="-0.02em">Hábitos</Heading>
@@ -136,6 +159,7 @@ export function Hábitos({ lista, hoje, disabled = false, onAdd, onRemove, onTog
         </Badge>
       </Flex>
 
+      {/* Formulário para Adicionar Hábito */}
       <form onSubmit={submit}>
         <Box px={{ base: "4", sm: "5" }} py="3.5" borderBottomWidth="1px" borderColor="#2a2c29">
           <HStack gap="2" align="flex-start">
@@ -150,8 +174,10 @@ export function Hábitos({ lista, hoje, disabled = false, onAdd, onRemove, onTog
         </Box>
       </form>
 
+      {/* Listagem de Hábitos */}
       {lista.length === 0 ? <EmptyRow /> : (
         <>
+          {/* Tabela de Hábitos para telas maiores */}
           <Box display={{ base: "none", md: "block" }} overflowX="auto">
             <Table.Root size="sm" minW="790px">
               <Table.Header bg="#171815">
@@ -173,6 +199,7 @@ export function Hábitos({ lista, hoje, disabled = false, onAdd, onRemove, onTog
             </Table.Root>
           </Box>
 
+          {/* Listagem simplificada para dispositivos móveis */}
           <Stack display={{ base: "flex", md: "none" }} gap="0">
             {lista.map((habit) => <Box key={habit.id} px="4" py="4" borderBottomWidth="1px" borderColor="#2a2c29">
               <Flex justify="space-between" gap="3" align="flex-start"><HabitDetails habit={habit} /><IconButton aria-label={`Remover ${habit.nome}`} variant="ghost" size="xs" color="#888d85" disabled={disabled || pending !== null} onClick={() => remove(habit)}><Icon as={LuTrash2} /></IconButton></Flex>
@@ -184,3 +211,4 @@ export function Hábitos({ lista, hoje, disabled = false, onAdd, onRemove, onTog
     </Box>
   );
 }
+

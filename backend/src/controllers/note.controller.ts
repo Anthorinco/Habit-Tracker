@@ -3,8 +3,12 @@ import { prisma } from "../prisma.js";
 import { parseBody, parseId } from "../lib/http-validation.js";
 import { noteCreateSchema, noteUpdateSchema } from "../lib/schemas.js";
 
+/**
+ * Retorna todas as notas do usuário autenticado, limpando antes aquelas que já expiraram.
+ */
 export async function getNotes(req: Request, res: Response) {
   try {
+    // Remove notas expiradas antes de retornar a lista
     await prisma.note.deleteMany({
       where: { userId: req.userId!, dataExpiracao: { lte: new Date() } },
     });
@@ -18,6 +22,9 @@ export async function getNotes(req: Request, res: Response) {
   }
 }
 
+/**
+ * Cria uma nova nota rápida para o usuário.
+ */
 export async function createNote(req: Request, res: Response) {
   const body = parseBody(noteCreateSchema, req.body, res);
   if (!body) return;
@@ -38,6 +45,9 @@ export async function createNote(req: Request, res: Response) {
   }
 }
 
+/**
+ * Atualiza o conteúdo ou a data de expiração de uma nota existente.
+ */
 export async function updateNote(req: Request, res: Response) {
   const id = parseId(req.params.id, res);
   const body = parseBody(noteUpdateSchema, req.body, res);
@@ -67,6 +77,9 @@ export async function updateNote(req: Request, res: Response) {
   }
 }
 
+/**
+ * Exclui permanentemente uma nota.
+ */
 export async function deleteNote(req: Request, res: Response) {
   const id = parseId(req.params.id, res);
   if (!id) return;
@@ -83,3 +96,4 @@ export async function deleteNote(req: Request, res: Response) {
     return res.status(500).json({ erro: "Não foi possível excluir a nota" });
   }
 }
+
